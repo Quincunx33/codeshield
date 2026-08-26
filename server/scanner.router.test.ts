@@ -22,9 +22,11 @@ describe("scanner router", () => {
   it("scans an anonymous ZIP containing supported source files", async () => {
     const zip = new AdmZip();
     zip.addFile("project/app.py", Buffer.from("API_KEY = 'secret-value'\\nprint('ok')"));
+    zip.addFile("Main.java", Buffer.from("String password = \"password-123456\";"));
     const report = await appRouter.createCaller({ user: null, req: base, res: response }).scanner.run({ projectName: "zip-anonymous", files: [], archiveBase64: zip.toBuffer().toString("base64"), archiveName: "project.zip" });
-    expect(report.filesScanned).toBe(1);
+    expect(report.filesScanned).toBe(2);
     expect(report.findings.some((item) => item.file === "project/app.py")).toBe(true);
+    expect(report.findings.some((item) => item.file === "Main.java")).toBe(true);
     expect(report.scanId).toBeUndefined();
   });
   it("rejects an authenticated archive with no supported source files", async () => {

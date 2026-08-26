@@ -4,7 +4,7 @@ import { sdk } from "./_core/sdk";
 import { createScan, getScheduledScanByTaskUid } from "./db";
 import { scanFiles } from "../shared/scanner";
 
-const supported = /\.(c|h|cc|cpp|cxx|hpp|py|java)$/i;
+const supported = /\.(c|h|cc|cpp|cxx|hpp|py|java|kt|kts)$/i;
 function archiveUrl(repositoryUrl: string): string {
   const url = new URL(repositoryUrl);
   if (url.hostname === "github.com") { const [owner, repo] = url.pathname.split("/").filter(Boolean); if (!owner || !repo) throw new Error("Invalid GitHub repository URL"); return `https://github.com/${owner}/${repo}/archive/refs/heads/main.zip`; }

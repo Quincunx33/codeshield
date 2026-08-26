@@ -30,7 +30,7 @@ export type ScanReport = {
 };
 
 const extMap: Record<string, SupportedLanguage> = {
-  c: "c", h: "c", cc: "cpp", cpp: "cpp", cxx: "cpp", hpp: "cpp", py: "python", java: "java",
+  c: "c", h: "c", cc: "cpp", cpp: "cpp", cxx: "cpp", hpp: "cpp", py: "python", java: "java", kt: "java", kts: "java",
 };
 function languageFor(path: string): SupportedLanguage {
   const ext = path.split(".").pop()?.toLowerCase() ?? "";

@@ -33,3 +33,9 @@
 - [x] Diagnose why a selected ZIP archive does not produce scan results
 - [x] Fix archive encoding, validation, extraction, or result rendering as needed
 - [x] Add a regression test for anonymous ZIP scanning with supported source files
+
+# Real-scan-only correction
+
+- [x] Remove demo report fallback and show an empty state before the first real scan
+- [x] Correct ZIP archive path handling so top-level and nested supported files are retained with valid references; regression covers both
+- [x] Add regression coverage for ZIP entries and real-scan-only initial rendering; visually verified empty initial state

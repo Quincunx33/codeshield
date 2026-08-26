@@ -42,7 +42,7 @@ export const appRouter = router({
         if (raw.length > 6_000_000) throw new Error("Archive exceeds the 6 MB temporary upload limit");
         if (ctx.user) { const storage = await storagePut(`temporary-scans/${ctx.user.id}/${nanoid(16)}.zip`, raw, "application/zip"); source = { storageKey: storage.key, originalName: input.archiveName || "source.zip" }; }
         const zip = new AdmZip(raw);
-        files = zip.getEntries().filter((entry) => !entry.isDirectory && !entry.entryName.includes("..") && !entry.entryName.startsWith("/") && /\.(c|h|cc|cpp|cxx|hpp|py|java)$/i.test(entry.entryName)).slice(0, 400).map((entry) => ({ path: entry.entryName, content: entry.getData().toString("utf8").slice(0, 300_000) }));
+        files = zip.getEntries().filter((entry) => !entry.isDirectory && !entry.entryName.includes("..") && !entry.entryName.startsWith("/") && /\.(c|h|cc|cpp|cxx|hpp|py|java|kt|kts)$/i.test(entry.entryName)).slice(0, 400).map((entry) => ({ path: entry.entryName, content: entry.getData().toString("utf8").slice(0, 300_000) }));
       }
       if (!files.length) throw new Error("Provide source code or an archive containing supported files");
       const report = scanFiles(input.projectName, files);
