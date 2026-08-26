@@ -10,12 +10,15 @@ describe("independent multi-project scanner validation", () => {
     expect(report.findings.some((item) => item.title === "Dynamic code execution")).toBe(true);
     expect(report.findings.some((item) => item.title === "Shell command execution")).toBe(true);
     expect(report.findings.some((item) => item.ruleId === "SEC001")).toBe(true);
+    expect(report.qualityScore.score).toBe(10);
   });
 
   it("keeps a production-style clean project free of security findings", () => {
     const report = scanFiles("clean-sample", cleanProject);
     expect(report.filesScanned).toBe(3);
     expect(report.findings.filter((item) => item.category === "security")).toEqual([]);
+    expect(report.qualityScore.score).toBe(10);
+    expect(report.qualityScore.label).toBe("excellent");
   });
 
   it("covers multiple supported languages in one independent project", () => {
@@ -28,5 +31,6 @@ describe("independent multi-project scanner validation", () => {
   it("does not turn known safe UI and library patterns into security findings", () => {
     const report = scanFiles("safe-edge-sample", safeEdgeProject);
     expect(report.findings.filter((item) => item.category === "security")).toEqual([]);
+    expect(report.qualityScore.score).toBe(10);
   });
 });

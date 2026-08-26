@@ -21,7 +21,7 @@ public class CodeShieldDesktop {
       HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(10)).build();
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
       String body = response.body();
-      String summary = "Status: " + response.statusCode() + "\n" + summaryText(body) + "\n\n";
+      String summary = "Status: " + response.statusCode() + "\n" + qualitySummary(body) + "\n" + summaryText(body) + "\n\n";
       String access = cookie.isBlank() ? "Anonymous scan · login/session is only needed for saved history and team features\n\n" : "Authenticated scan · this result can be saved to history\n\n";
       output.setText(access + aiSummary(body) + "CodeShield Mix scan response\n\n" + summary + body);
     } catch (Exception error) { output.setText("Scan failed: " + error.getMessage()); }
@@ -29,6 +29,9 @@ public class CodeShieldDesktop {
   static int count(String text, String needle) { int total = 0, at = 0; while ((at = text.indexOf(needle, at)) >= 0) { total++; at += needle.length(); } return total; }
   static int summaryCount(String body, String key) { int summary = body.indexOf("\"summary\""); int field = summary < 0 ? -1 : body.indexOf("\"" + key + "\"", summary); if (field < 0) return 0; int colon = body.indexOf(':', field); int start = colon + 1; while (start < body.length() && !Character.isDigit(body.charAt(start))) start++; int end = start; while (end < body.length() && Character.isDigit(body.charAt(end))) end++; return start < end ? Integer.parseInt(body.substring(start, end)) : 0; }
   static String summaryText(String body) { return "Critical: " + summaryCount(body, "critical") + "  High: " + summaryCount(body, "high") + "  Medium: " + summaryCount(body, "medium") + "  Low: " + summaryCount(body, "low") + "  Info: " + summaryCount(body, "info"); }
+  static String qualityNumber(String body, String key) { int quality = body.indexOf("\"qualityScore\""); int field = quality < 0 ? -1 : body.indexOf("\"" + key + "\"", quality); if (field < 0) return "n/a"; int colon = body.indexOf(':', field); int start = colon + 1; while (start < body.length() && !Character.isDigit(body.charAt(start))) start++; int end = start; while (end < body.length() && (Character.isDigit(body.charAt(end)) || body.charAt(end) == '.')) end++; return start < end ? body.substring(start, end) : "n/a"; }
+  static String qualitySummary(String body) { String score = qualityNumber(body, "score"); if (!score.contains(".")) score = score + ".0"; return "Code quality: " + score + "/10 (" + qualityLabel(body) + ") · security risk and AI-generated likelihood reported separately"; }
+  static String qualityLabel(String body) { int quality = body.indexOf("\"qualityScore\""); int field = quality < 0 ? -1 : body.indexOf("\"label\"", quality); if (field < 0) return "unknown"; int quote = body.indexOf('"', body.indexOf(':', field) + 1); int end = body.indexOf('"', quote + 1); return quote >= 0 && end > quote ? body.substring(quote + 1, end) : "unknown"; }
   static String aiSummary(String body) {
     int start = body.indexOf("\"aiSignals\"");
     if (start < 0) return "";
@@ -38,7 +41,7 @@ public class CodeShieldDesktop {
     String section = body.substring(start, end);
     java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\"file\"\\s*:\\s*\"([^\"]+)\".*?\"score\"\\s*:\\s*(\\d+).*?\"confidence\"\\s*:\\s*\"([^\"]+)\".*?\"reasons\"\\s*:\\s*\\[(.*?)\\]", java.util.regex.Pattern.DOTALL);
     java.util.regex.Matcher matcher = pattern.matcher(section);
-    StringBuilder result = new StringBuilder("AI-assisted code signals · pattern-based, not authorship proof\n");
+    StringBuilder result = new StringBuilder("AI-generated code likelihood · pattern-based, not authorship proof\n");
     boolean found = false;
     while (matcher.find()) {
       found = true;

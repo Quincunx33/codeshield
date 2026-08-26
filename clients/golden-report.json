@@ -3,6 +3,13 @@
   "projectName": "golden-contract",
   "filesScanned": 1,
   "summary": {"critical": 1, "high": 1, "medium": 0, "low": 0, "info": 0},
+  "qualityScore": {
+    "score": 10,
+    "label": "excellent",
+    "breakdown": {"maintainability": 0, "duplication": 0, "hygiene": 0},
+    "findingsConsidered": 0,
+    "basis": "Maintainability, duplication, and code-hygiene findings only; security risk and AI-likelihood signals are reported separately."
+  },
   "findings": [
     {"title": "Hard-coded secret", "severity": "critical", "file": "main.py", "line": 1},
     {"title": "Dynamic code execution", "severity": "high", "file": "main.py", "line": 2}

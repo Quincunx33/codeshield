@@ -42,6 +42,19 @@ describe("shared scanner contract", () => {
     expect(report.findings.some((item) => item.title === "Dynamic code execution" && item.line === 2)).toBe(true);
     expect(report.summary.critical).toBe(1);
     expect(report.findings[0]?.severity).toBe("critical");
+    expect(report.qualityScore.score).toBe(9.6);
+    expect(report.qualityScore.findingsConsidered).toBe(1);
+    expect(report.qualityScore.basis).toContain("security risk");
+  });
+  it("scores clean code highly and quality issues lower without treating security as quality", () => {
+    const clean = scanFiles("clean", [{ path: "main.py", content: "def add(left, right):\n    return left + right\n\nprint(add(1, 2))" }]);
+    const needsWork = scanFiles("needs-work", [{ path: "main.py", content: "# TODO: make this robust\ntry:\n    print(value)\nexcept:\n    pass" }]);
+    const secretOnly = scanFiles("secret-only", [{ path: "main.py", content: 'API_KEY = "secret-value-123456"' }]);
+    expect(clean.qualityScore.score).toBe(10);
+    expect(clean.qualityScore.label).toBe("excellent");
+    expect(needsWork.qualityScore.score).toBeLessThan(10);
+    expect(needsWork.qualityScore.breakdown.hygiene).toBeGreaterThan(0);
+    expect(secretOnly.qualityScore.score).toBe(10);
   });
   it("does not flag safe library execution or non-security randomness", () => {
     const report = scanFiles("safe-context", [

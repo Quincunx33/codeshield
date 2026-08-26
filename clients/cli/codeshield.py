@@ -18,10 +18,20 @@ def format_summary(report):
     summary = report.get('summary', {})
     return '\\n'.join(f"{severity.upper():<9} {summary.get(severity, 0)}" for severity in ('critical', 'high', 'medium', 'low', 'info'))
 
+def format_quality_score(report):
+    quality = report.get('qualityScore', {})
+    breakdown = quality.get('breakdown', {})
+    if not quality: return 'CODE QUALITY  n/a'
+    return (f"CODE QUALITY  {float(quality.get('score', 0)):.1f}/10 ({quality.get('label', 'unknown')})\n"
+            f"  Maintainability -{float(breakdown.get('maintainability', 0)):.2f} · "
+            f"Duplication -{float(breakdown.get('duplication', 0)):.2f} · "
+            f"Hygiene -{float(breakdown.get('hygiene', 0)):.2f}\n"
+            "  Security findings and AI-generated likelihood are reported separately.")
+
 def format_ai_signals(report):
     signals = report.get('aiSignals', [])
     if not signals: return ''
-    lines = [f"\\nAI-assisted code signals ({len(signals)} file(s)) · pattern-based, not authorship proof"]
+    lines = [f"\\nAI-generated code likelihood ({len(signals)} file(s)) · pattern-based, not authorship proof"]
     lines.extend(f"  {item.get('score', 0)}% {item.get('confidence', 'unknown')} · {item.get('file')} · {'; '.join(item.get('reasons', []))}" for item in signals)
     return '\\n'.join(lines) + '\\n'
 
@@ -49,6 +59,7 @@ def main():
     print(f"\nCodeShield Mix · {report.get('projectName', 'project')}\n{'─' * 58}")
     if not cookie: print("Anonymous scan · add --cookie only when saved history or team features are needed")
     print(f"Files scanned: {report.get('filesScanned', 0)}")
+    print(format_quality_score(report))
     print(format_summary(report))
     print(format_ai_signals(report), end='')
     print(f"\nFindings: {len(report.get('findings', []))}")

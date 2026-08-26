@@ -145,3 +145,19 @@
 - [x] Verify the pending loading state in a delayed browser-driven desktop scan and responsive mobile layout
 - [x] Add durable progress helper regression coverage and preserve existing success/error mutation handling
 - [x] Align progress regressions with the active Home.tsx pending panel and remove unused percentage helper logic
+
+# AI and quality report revision
+
+- [x] Define an honest AI-generated-code likelihood contract with evidence and non-authorship disclaimer
+- [x] Add a transparent overall code-quality score from 0 to 10 with category breakdown
+- [x] Show AI likelihood and quality score separately in dashboard, JSON/HTML reports, Python CLI, and Java client
+- [x] Add regression tests using vulnerable, clean, mixed-language, and safe fixtures
+- [x] Verify the revised report UX and publish the release
+- [x] Update report tests for the explicit AI-generated likelihood heading and quality-score section
+- [x] Add quality-score rendering to the Python CLI, Java client, and shared golden report checks
+- [x] Verify quality score and AI-likelihood sections in desktop and mobile dashboard views
+- [x] Make Python and Java contract tests load the committed clients/golden-report.json fixture
+- [x] Save the final quality-report checkpoint after those verifications
+- [x] Correct the Python golden-report expectation and rerun shared Python/Java contract tests
+- [x] Capture mobile responsive layout evidence for the quality-score and AI-likelihood sections
+- [x] Publish a final quality-report checkpoint after all corrections pass

@@ -25,6 +25,7 @@ export function deriveProjectName(providedName: string | undefined, archiveName?
   return derived || "Uploaded archive";
 }
 export type AiSignal = { file: string; lineStart: number; lineEnd: number; evidence: string; score: number; confidence: "low" | "medium" | "high"; reasons: string[]; scoreBreakdown: { commentDensity: number; phrasing: number; unresolvedMarkers: number; formatting: number; breadth: number }; verification: string; remediation: string };
+export type QualityScore = { score: number; label: "excellent" | "good" | "needs-attention" | "poor"; breakdown: { maintainability: number; duplication: number; hygiene: number }; findingsConsidered: number; basis: string };
 
 export type ScanReport = {
   schemaVersion: "1.0";
@@ -36,6 +37,7 @@ export type ScanReport = {
   languages: SupportedLanguage[];
   summary: Record<Severity, number>;
   findings: Finding[];
+  qualityScore: QualityScore;
   aiSignals: AiSignal[];
 };
 
@@ -125,7 +127,17 @@ export function scanFiles(projectName: string, files: ScanInputFile[]): ScanRepo
   }
   const summary = { critical: 0, high: 0, medium: 0, low: 0, info: 0 } as Record<Severity, number>;
   findings.forEach((item) => summary[item.severity]++);
-  return { schemaVersion: "1.0", projectName: projectName || "Untitled project", createdAt: new Date().toISOString(), durationMs: Date.now() - started, filesScanned: supported.length, languages: Array.from(new Set(supported.map((file) => languageFor(file.path)))), summary, findings, aiSignals };
+  const qualityDeductions = { maintainability: 0, duplication: 0, hygiene: 0 };
+  for (const item of findings) {
+    if (item.category === "duplication") qualityDeductions.duplication += 0.25;
+    else if (item.ruleId === "QLT003") qualityDeductions.maintainability += 1.0;
+    else if (item.ruleId === "QLT001") qualityDeductions.hygiene += 0.4;
+    else if (item.ruleId === "QLT002") qualityDeductions.maintainability += 0.15;
+  }
+  const deductions = qualityDeductions.maintainability + qualityDeductions.duplication + qualityDeductions.hygiene;
+  const qualityScoreValue = Math.max(0, Math.min(10, Math.round((10 - deductions) * 10) / 10));
+  const qualityScore: QualityScore = { score: qualityScoreValue, label: qualityScoreValue >= 9 ? "excellent" : qualityScoreValue >= 7 ? "good" : qualityScoreValue >= 5 ? "needs-attention" : "poor", breakdown: qualityDeductions, findingsConsidered: findings.filter((item) => item.category !== "security").length, basis: "Maintainability, duplication, and code-hygiene findings only; security risk and AI-likelihood signals are reported separately." };
+  return { schemaVersion: "1.0", projectName: projectName || "Untitled project", createdAt: new Date().toISOString(), durationMs: Date.now() - started, filesScanned: supported.length, languages: Array.from(new Set(supported.map((file) => languageFor(file.path)))), summary, findings, qualityScore, aiSignals };
 }
 
 export function demoFiles(): ScanInputFile[] {

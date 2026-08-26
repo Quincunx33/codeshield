@@ -1,0 +1,3 @@
+# Quality score dashboard smoke verification
+
+The updated preview loaded successfully. A real pasted TypeScript scan completed and displayed the new report sections separately: `Code quality score 9.6/10 (excellent)` with Maintainability, Duplication, and Hygiene deductions; severity totals; and `AI-generated code likelihood` at `60% likelihood · medium confidence` with evidence, score breakdown, verification guidance, and remediation. The finding list remained separate and showed one Low unresolved-work-marker finding. This confirms the score is not confused with security severity or AI authorship evidence.

@@ -1,3 +1,4 @@
+import json
 import pathlib
 import sys
 import unittest
@@ -13,6 +14,12 @@ class CliApiContractTest(unittest.TestCase):
         self.assertIn("CRITICAL  1", rendered)
         self.assertIn("HIGH      1", rendered)
         self.assertIn("INFO      0", rendered)
+
+    def test_formats_shared_golden_quality_score(self):
+        report = json.loads((pathlib.Path(__file__).parents[1] / "golden-report.json").read_text(encoding="utf-8"))
+        rendered = codeshield.format_quality_score(report)
+        self.assertIn("CODE QUALITY  10.0/10 (excellent)", rendered)
+        self.assertIn("Security findings and AI-generated likelihood are reported separately.", rendered)
 
     def test_uses_single_procedure_trpc_payload(self):
         payload = codeshield.build_payload("contract", [{"path": "main.py", "content": "print(1)"}])
