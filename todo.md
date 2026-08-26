@@ -105,3 +105,10 @@
 - [x] Add executable full-archive-derived severity upper-bound assertions to the test suite
 - [x] Assert safe CipherChat patterns and true-positive secret/eval/shell cases together in one durable regression suite
 - [x] Add an optional archive-path regression test that asserts the uploaded CipherChat ZIP summary when supplied in the test environment
+
+# Multi-fixture validation
+
+- [x] Create independent vulnerable, clean, mixed-language, and false-positive edge-case fixture projects
+- [x] Scan every new fixture and record severity/category results
+- [x] Add durable assertions for expected findings and clean-project behavior
+- [x] Correct any rule gaps revealed by the independent fixtures; no new gaps found
