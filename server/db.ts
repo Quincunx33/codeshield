@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, findings, scans, users } from "../drizzle/schema";
-import type { Finding, ScanReport } from "../shared/scanner";
+import { InsertUser, findings, scanSources, scans, users } from "../drizzle/schema";
+import type { ScanReport } from "../shared/scanner";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -25,12 +25,13 @@ export async function getUserByOpenId(openId: string) {
   const db = await getDb(); if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1); return result[0];
 }
-export async function createScan(userId: number, report: ScanReport) {
+export async function createScan(userId: number, report: ScanReport, source?: { storageKey: string; originalName: string }) {
   const db = await getDb(); if (!db) return undefined;
   const [result] = await db.insert(scans).values({ userId, projectName: report.projectName, filesScanned: report.filesScanned, criticalCount: report.summary.critical, highCount: report.summary.high, mediumCount: report.summary.medium, lowCount: report.summary.low, infoCount: report.summary.info }).$returningId();
   const scanId = result.id;
+  if (source) await db.insert(scanSources).values({ scanId, storageKey: source.storageKey, originalName: source.originalName, expiresAt: new Date(Date.now() + 60 * 60 * 1000) });
   if (report.findings.length) await db.insert(findings).values(report.findings.map((item) => ({ scanId, ruleId: item.ruleId, severity: item.severity, category: item.category, title: item.title, message: item.message, remediation: item.remediation, explanation: item.explanation ?? null, file: item.file, line: item.line, language: item.language, snippet: item.snippet ?? null })));
   return scanId;
 }
 export async function listScans(userId: number) { const db = await getDb(); if (!db) return []; return db.select().from(scans).where(eq(scans.userId, userId)).orderBy(desc(scans.createdAt)).limit(30); }
-export async function getScan(userId: number, scanId: number) { const db = await getDb(); if (!db) return undefined; const scan = (await db.select().from(scans).where(eq(scans.id, scanId)).limit(1))[0]; if (!scan || scan.userId !== userId) return undefined; const items = await db.select().from(findings).where(eq(findings.scanId, scanId)); return { scan, findings: items }; }
+export async function getScan(userId: number, scanId: number) { const db = await getDb(); if (!db) return undefined; const scan = (await db.select().from(scans).where(eq(scans.id, scanId)).limit(1))[0]; if (!scan || scan.userId !== userId) return undefined; const source = (await db.select().from(scanSources).where(eq(scanSources.scanId, scanId)).limit(1))[0]; if (source && source.expiresAt.getTime() <= Date.now()) return undefined; const items = await db.select().from(findings).where(eq(findings.scanId, scanId)); return { scan, findings: items, source: source ?? null }; }
