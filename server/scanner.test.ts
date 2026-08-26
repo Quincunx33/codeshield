@@ -66,8 +66,12 @@ describe("shared scanner contract", () => {
   it("keeps known CipherChat safe patterns free of security findings and bounds true positives", () => {
     const report = scanFiles("cipherchat-safe-fixture", cipherchatStyleFiles);
     const safeSecurityFindings = report.findings.filter((item) => cipherchatExpected.securitySafeFiles.includes(item.file) && item.category === "security");
+    expect(report.filesScanned).toBe(cipherchatExpected.filesScanned);
     expect(safeSecurityFindings).toEqual([]);
     expect(report.findings.some((item) => item.file === cipherchatExpected.truePositiveFile && item.title === "Shell command execution")).toBe(true);
+    expect(report.findings.some((item) => item.file === cipherchatExpected.secretFile && item.ruleId === "SEC001")).toBe(true);
+    expect(report.findings.some((item) => item.file === cipherchatExpected.secretFile && item.title === "Dynamic code execution")).toBe(true);
+    expect(report.summary.critical).toBe(cipherchatExpected.maxCritical);
     expect(report.summary.high).toBeLessThanOrEqual(cipherchatExpected.maxHigh);
     expect(report.summary.medium).toBeLessThanOrEqual(cipherchatExpected.maxMedium);
   });

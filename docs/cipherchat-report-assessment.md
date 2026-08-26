@@ -13,3 +13,7 @@ The report is therefore useful as a noisy triage output, but it is not yet an ac
 ## Precision regression comparison
 
 The updated scanner was rerun against the uploaded archive without executing project code. It still scanned 68 files, while findings changed from 874 to 293. High findings changed from 3 to 0, Medium findings changed from 15 to 0, Low duplication signals changed from 337 to 200 after pair-level capping, and Info long-line signals changed from 519 to 93 after raising the threshold. The remaining Low and Info entries are explicitly quality/duplication signals, not security vulnerabilities. Regression tests confirm that `ffmpeg.exec(...)`, UI randomness, and reaction throttling are not flagged, while a security-context `Math.random()` remains detectable.
+
+## Full archive noise reduction result
+
+A complete rerun of the uploaded 68-file archive after boilerplate and markup exclusions produced 48 findings: 0 Critical, 0 High, 0 Medium, 29 Low duplication signals, and 19 Info long-line signals. This is a reduction from the prior 293 findings and the original 874. The remaining findings are quality/duplication categories rather than security vulnerabilities; the scanner's security summary is now zero for this archive. The full test suite passed with 21 tests, along with typecheck, production build, Python client checks, and Java client assertions.

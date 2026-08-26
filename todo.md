@@ -89,3 +89,19 @@
 - [x] Add a durable fixture-based test for known CipherChat false-positive patterns and reduced severity counts
 - [x] Document the language scope of shell/process detection in scanner tests
 - [x] Add a checked CipherChat-style fixture bundle with expected safe-pattern findings and severity upper bounds
+
+# Full uploaded-archive precision audit
+
+- [x] Run the complete CipherChat ZIP through the current scanner and profile every remaining finding category
+- [x] Inspect representative source contexts for all repeated security and quality patterns
+- [x] Refine rules based on the real archive while preserving true-positive detection
+- [x] Add durable full-archive-derived regression coverage and document before/after counts; archive-wide test asserts 68 files and 0 critical/high/medium
+
+# Full archive noise refinement
+
+- [x] Exclude common boilerplate, imports, exports, response wrappers, and markup from duplicate-code signals
+- [x] Exclude SVG/HTML/template-heavy lines from long-line quality signals
+- [x] Re-run the entire CipherChat ZIP and preserve true security findings with durable count assertions
+- [x] Add executable full-archive-derived severity upper-bound assertions to the test suite
+- [x] Assert safe CipherChat patterns and true-positive secret/eval/shell cases together in one durable regression suite
+- [x] Add an optional archive-path regression test that asserts the uploaded CipherChat ZIP summary when supplied in the test environment

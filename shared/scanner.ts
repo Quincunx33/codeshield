@@ -83,7 +83,9 @@ export function scanFiles(projectName: string, files: ScanInputFile[]): ScanRepo
       if (/\b(Math\.random|java\.util\.Random)\b/i.test(text) && randomSecurityContext) findings.push(finding("SECNCR", "medium", "security", "Non-cryptographic randomness", "General-purpose randomness is used in a file that handles security-sensitive material; confirm it is not used for a secret or security token.", "Use a cryptographically secure random generator for secrets, tokens, nonces, and authentication values.", file.path, line, language, raw));
       if (/\b(TODO|FIXME|HACK)\b/i.test(text)) findings.push(finding("QLT001", "low", "quality", "Unresolved work marker", "This line contains a TODO, FIXME, or HACK marker.", "Resolve the marker or track it as a documented issue before release.", file.path, line, language, raw));
       const normalized = text.replace(/\s+/g, " ").trim();
-      if (normalized.length >= 50 && !normalized.startsWith("//") && !normalized.startsWith("#") && !normalized.startsWith("/*")) {
+      const boilerplateDuplicate = /^(import|export|from)\b|^return new Response\b|^['\"]?[A-Za-z-]+['\"]?\s*:\s*['\"]|^for \(|^if \(/i.test(normalized);
+      const duplicateCandidate = normalized.length >= 80 && !boilerplateDuplicate && !normalized.startsWith("//") && !normalized.startsWith("#") && !normalized.startsWith("/*");
+      if (duplicateCandidate) {
         const previous = seenLines.get(normalized);
         if (previous && previous.file !== file.path) {
           const pairKey = [previous.file, file.path].sort().join("::");
@@ -91,7 +93,8 @@ export function scanFiles(projectName: string, files: ScanInputFile[]): ScanRepo
           if (count < 5) { findings.push(finding("DUP001", "low", "duplication", "Repeated code signal", `This line closely matches ${previous.file}:${previous.line} in another file.`, "Extract shared logic into a reusable function or module.", file.path, line, language, raw)); duplicateCounts.set(pairKey, count + 1); }
         } else seenLines.set(normalized, { file: file.path, line, language });
       }
-      if (text.length > 220) findings.push(finding("QLT002", "info", "quality", "Long source line", "Very long lines reduce readability and can hide defects during review.", "Split the expression or apply the language formatter.", file.path, line, language, raw));
+      const markupHeavy = /<\/?(svg|div|span|button|a)\b|\b(style|className|systemInstructionText)\s*=|^\s*`[^`]*<[^`]*`\s*;?$/i.test(text);
+      if (text.length > 220 && !markupHeavy) findings.push(finding("QLT002", "info", "quality", "Long source line", "Very long executable lines reduce readability and can hide defects during review.", "Split the expression or apply the language formatter.", file.path, line, language, raw));
       if (language === "python" && /except\s*:/i.test(lower)) findings.push(finding("QLT003", "medium", "quality", "Broad exception handler", "Catching every exception can hide defects and make failures difficult to diagnose.", "Catch the narrowest expected exception types and log meaningful context.", file.path, line, language, raw));
     });
   }
