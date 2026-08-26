@@ -60,11 +60,15 @@ export function scanFiles(projectName: string, files: ScanInputFile[]): ScanRepo
   for (const file of supported) {
     const language = languageFor(file.path);
     const lines = file.content.split(/\r?\n/);
+    let inBlockComment = false;
     lines.forEach((raw, index) => {
       const line = index + 1;
       const text = raw.trim();
       const lower = text.toLowerCase();
-      if (/(password|passwd|secret|api[_-]?key|token)\s*[:=]\s*["'][^"']{6,}["']/i.test(text)) {
+      const commentOnly = inBlockComment || /^(\/\/|#|\/\*|\*|\*\/)/.test(text);
+      if (!inBlockComment && /^\/\*/.test(text) && !text.includes("*/")) inBlockComment = true;
+      if (inBlockComment && text.includes("*/")) inBlockComment = false;
+      if (!commentOnly && /(password|passwd|secret|api[_-]?key|token)\s*[:=]\s*["'][^"']{6,}["']/i.test(text)) {
         findings.push(finding("SEC001", "critical", "security", "Hard-coded secret", "A credential-like value is embedded directly in source code.", "Move the value to a secret manager or environment variable, then rotate the exposed credential.", file.path, line, language, raw));
       }
       const risky: Array<[RegExp, string, Severity, string, string]> = [
@@ -75,12 +79,12 @@ export function scanFiles(projectName: string, files: ScanInputFile[]): ScanRepo
       for (const [pattern, title, severity, message, remediation] of risky) {
         const safeFfmpegCall = title === "Dynamic code execution" && /\bffmpeg\.exec\s*\(/i.test(text);
         const shellCallInSupportedLanguage = title !== "Shell command execution" || ["c", "cpp", "python"].includes(language);
-        if (pattern.test(text) && !safeFfmpegCall && shellCallInSupportedLanguage) findings.push(finding(`SEC${title.replace(/[^A-Z]/gi, "").slice(0, 5).toUpperCase()}`, severity, "security", title, message, remediation, file.path, line, language, raw));
+        if (!commentOnly && pattern.test(text) && !safeFfmpegCall && shellCallInSupportedLanguage) findings.push(finding(`SEC${title.replace(/[^A-Z]/gi, "").slice(0, 5).toUpperCase()}`, severity, "security", title, message, remediation, file.path, line, language, raw));
       }
       const contextStart = Math.max(0, index - 10);
       const contextEnd = Math.min(lines.length, index + 11);
       const randomSecurityContext = /\b(secret|token|password|passwd|nonce|session|auth|otp|csrf|credential|api[_-]?key)\b/i.test(lines.slice(contextStart, contextEnd).join("\n"));
-      if (/\b(Math\.random|java\.util\.Random)\b/i.test(text) && randomSecurityContext) findings.push(finding("SECNCR", "medium", "security", "Non-cryptographic randomness", "General-purpose randomness is used in a file that handles security-sensitive material; confirm it is not used for a secret or security token.", "Use a cryptographically secure random generator for secrets, tokens, nonces, and authentication values.", file.path, line, language, raw));
+      if (!commentOnly && /\b(Math\.random|java\.util\.Random)\b/i.test(text) && randomSecurityContext) findings.push(finding("SECNCR", "medium", "security", "Non-cryptographic randomness", "General-purpose randomness is used in a file that handles security-sensitive material; confirm it is not used for a secret or security token.", "Use a cryptographically secure random generator for secrets, tokens, nonces, and authentication values.", file.path, line, language, raw));
       if (/\b(TODO|FIXME|HACK)\b/i.test(text)) findings.push(finding("QLT001", "low", "quality", "Unresolved work marker", "This line contains a TODO, FIXME, or HACK marker.", "Resolve the marker or track it as a documented issue before release.", file.path, line, language, raw));
       const normalized = text.replace(/\s+/g, " ").trim();
       const boilerplateDuplicate = /^(import|export|from)\b|^return new Response\b|^['\"]?[A-Za-z-]+['\"]?\s*:\s*['\"]|^for \(|^if \(/i.test(normalized);

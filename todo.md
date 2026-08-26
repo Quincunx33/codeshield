@@ -123,3 +123,11 @@
 - [x] Fix verified client serialization defect and add a regression test
 - [x] Fix Python CLI and Java desktop client tRPC payload/route formatting discovered by live HTTP smoke test
 - [x] Add executable live-contract checks for both external clients against the running API
+
+# Second deep verification pass
+
+- [x] Audit rule accuracy, finding IDs, severity summaries, and JSON/HTML report consistency
+- [x] Test compressed, duplicate, unusual-path, binary, and concurrent ZIP scans
+- [x] Exercise API failures, repeated scans, and live dashboard scan smoke checks
+- [x] Verify CLI/Java output consistency against the shared API response
+- [x] Fix newly verified commented-code false positives and add durable regression

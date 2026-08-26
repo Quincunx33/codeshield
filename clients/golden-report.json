@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "projectName": "golden-contract",
+  "filesScanned": 1,
+  "summary": {"critical": 1, "high": 1, "medium": 0, "low": 0, "info": 0},
+  "findings": [
+    {"title": "Hard-coded secret", "severity": "critical", "file": "main.py", "line": 1},
+    {"title": "Dynamic code execution", "severity": "high", "file": "main.py", "line": 2}
+  ],
+  "aiSignals": []
+}

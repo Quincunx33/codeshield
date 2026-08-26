@@ -14,6 +14,10 @@ def collect(root):
 def build_payload(project_name, files):
     return {'json': {'projectName': project_name, 'files': files}}
 
+def format_summary(report):
+    summary = report.get('summary', {})
+    return '\\n'.join(f"{severity.upper():<9} {summary.get(severity, 0)}" for severity in ('critical', 'high', 'medium', 'low', 'info'))
+
 def format_ai_signals(report):
     signals = report.get('aiSignals', [])
     if not signals: return ''
@@ -45,8 +49,7 @@ def main():
     print(f"\nCodeShield Mix · {report.get('projectName', 'project')}\n{'─' * 58}")
     if not cookie: print("Anonymous scan · add --cookie only when saved history or team features are needed")
     print(f"Files scanned: {report.get('filesScanned', 0)}")
-    summary = report.get('summary', {})
-    for severity in ('critical', 'high', 'medium', 'low', 'info'): print(f"{severity.upper():<9} {summary.get(severity, 0)}")
+    print(format_summary(report))
     print(format_ai_signals(report), end='')
     print(f"\nFindings: {len(report.get('findings', []))}")
     for item in report.get('findings', [])[:20]: print(f"[{item['severity'].upper():8}] {item['file']}:{item['line']}  {item['title']} — {item['message']}")
