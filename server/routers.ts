@@ -42,9 +42,14 @@ export const appRouter = router({
         if (raw.length > 6_000_000) throw new Error("Archive exceeds the 6 MB temporary upload limit");
         if (ctx.user) { const storage = await storagePut(`temporary-scans/${ctx.user.id}/${nanoid(16)}.zip`, raw, "application/zip"); source = { storageKey: storage.key, originalName: input.archiveName || "source.zip" }; }
         const zip = new AdmZip(raw);
-        files = zip.getEntries().filter((entry) => !entry.isDirectory && !entry.entryName.includes("..") && !entry.entryName.startsWith("/") && /\.(c|h|cc|cpp|cxx|hpp|py|java|kt|kts)$/i.test(entry.entryName)).slice(0, 400).map((entry) => ({ path: entry.entryName, content: entry.getData().toString("utf8").slice(0, 300_000) }));
+        const entries = zip.getEntries().filter((entry) => !entry.isDirectory);
+        const supportedEntries = entries.filter((entry) => !entry.entryName.includes("..") && !entry.entryName.startsWith("/") && /\.(c|h|cc|cpp|cxx|hpp|py|java|kt|kts|js|jsx|ts|tsx)$/i.test(entry.entryName));
+        files = supportedEntries.slice(0, 400).map((entry) => ({ path: entry.entryName, content: entry.getData().toString("utf8").slice(0, 300_000) }));
+        if (!files.length) {
+          const extensions = Array.from(new Set(entries.map((entry) => entry.entryName.includes(".") ? `.${entry.entryName.split(".").pop()?.toLowerCase()}` : "[no extension]"))).slice(0, 8).join(", ");
+          throw new Error(`No supported source files found. Archive contained ${entries.length} file(s)${extensions ? ` (${extensions})` : ""}. Add C/C++, Python, Java/Kotlin, JavaScript, or TypeScript files.`);
+        }
       }
-      if (!files.length) throw new Error("Provide source code or an archive containing supported files");
       const report = scanFiles(input.projectName, files);
       const scanId = ctx.user ? await createScan(ctx.user.id, report, source) : undefined;
       return { ...report, scanId };

@@ -33,6 +33,16 @@ describe("scanner router", () => {
     expect(report.findings.some((item) => item.file === "Main.java")).toBe(true);
     expect(report.scanId).toBeUndefined();
   });
+  it("scans JavaScript and TypeScript files from an anonymous ZIP", async () => {
+    const zip = new AdmZip();
+    zip.addFile("web/src/app.ts", Buffer.from('const token = "secret-value-123";\\nconst result = eval(input);'));
+    zip.addFile("web/src/client.jsx", Buffer.from("function render() { return <div />; }"));
+    const report = await appRouter.createCaller({ user: null, req: base, res: response }).scanner.run({ projectName: "web-archive", files: [], archiveBase64: zip.toBuffer().toString("base64"), archiveName: "web.zip" });
+    expect(report.filesScanned).toBe(2);
+    expect(report.languages).toEqual(["typescript", "javascript"]);
+    expect(report.findings.some((item) => item.file === "web/src/app.ts")).toBe(true);
+    expect(report.scanId).toBeUndefined();
+  });
   it("rejects an authenticated archive with no supported source files", async () => {
     const caller = appRouter.createCaller({ user, req: base, res: response });
     await expect(caller.scanner.run({ projectName: "empty archive", files: [], archiveBase64: Buffer.from("not-a-zip").toString("base64"), archiveName: "empty.zip" })).rejects.toThrow();

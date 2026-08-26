@@ -45,3 +45,9 @@
 - [x] Allow ZIP scans with a blank project name by deriving a safe name from the archive filename
 - [x] Validate pasted-code scans with a clear project-name message before sending the request
 - [x] Add regression coverage for blank project name ZIP scans, including shared derivation helper cases
+
+# Broader archive support
+
+- [x] Support JavaScript and TypeScript source extensions in archive and pasted-code scanning
+- [x] Make unsupported archive errors list accepted source extensions and detected archive context, including discovered extensions
+- [x] Add regression coverage for JavaScript/TypeScript ZIP projects through scanner.run with a real archive

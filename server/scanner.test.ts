@@ -16,6 +16,12 @@ describe("shared scanner contract", () => {
     expect(report.summary.critical).toBe(1);
     expect(report.findings[0]?.severity).toBe("critical");
   });
+  it("scans JavaScript and TypeScript using the shared report shape", () => {
+    const report = scanFiles("web-project", [{ path: "src/app.ts", content: 'const token = "secret-value-123";\nconst result = eval(input);' }, { path: "src/client.jsx", content: "function render() { return <div />; }" }]);
+    expect(report.filesScanned).toBe(2);
+    expect(report.languages).toEqual(["typescript", "javascript"]);
+    expect(report.findings.some((item) => item.file === "src/app.ts" && item.line === 1)).toBe(true);
+  });
   it("scans C++ and Java using the same report shape", () => {
     const report = scanFiles("multi", [{ path: "a.cpp", content: "char* x; strcpy(x, input);" }, { path: "Token.java", content: 'String password = "password-123456";' }]);
     expect(report.filesScanned).toBe(2);
