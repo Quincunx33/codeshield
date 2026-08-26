@@ -51,3 +51,14 @@
 - [x] Support JavaScript and TypeScript source extensions in archive and pasted-code scanning
 - [x] Make unsupported archive errors list accepted source extensions and detected archive context, including discovered extensions
 - [x] Add regression coverage for JavaScript/TypeScript ZIP projects through scanner.run with a real archive
+
+# AI-generated code detection
+
+- [x] Add transparent AI-likelihood scoring signals to scan reports without claiming authorship certainty
+- [x] Show AI-likelihood score, confidence, and evidence reasons in the web findings view
+- [x] Include AI-detection fields in JSON/HTML reports and client output
+- [x] Add regression tests for high-signal and low-signal code samples
+- [x] Add AI-likelihood sections to HTML reports and client-visible summaries in CLI and Java
+- [x] Test AI-signal serialization and cross-client output consistency
+- [x] Render explicit AI-likelihood file/score/confidence/reason summaries in the Java client
+- [x] Add deterministic CLI and Java output-format checks for AI signals

@@ -18,13 +18,30 @@ public class CodeShieldDesktop {
       HttpRequest request = builder.POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8)).build();
       HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
       String body = response.body();
-      String summary = "Status: " + response.statusCode() + "\\n" +
-        "Critical: " + count(body, "critical") + "  High: " + count(body, "high") + "  Medium: " + count(body, "medium") + "\\n\\n";
-      String access = cookie.isBlank() ? "Anonymous scan · login/session is only needed for saved history and team features\\n\\n" : "Authenticated scan · this result can be saved to history\\n\\n";
-      output.setText(access + "CodeShield Mix scan response\\n\\n" + summary + body);
+      String summary = "Status: " + response.statusCode() + "\n" + "Critical: " + count(body, "critical") + "  High: " + count(body, "high") + "  Medium: " + count(body, "medium") + "\n\n";
+      String access = cookie.isBlank() ? "Anonymous scan · login/session is only needed for saved history and team features\n\n" : "Authenticated scan · this result can be saved to history\n\n";
+      output.setText(access + aiSummary(body) + "CodeShield Mix scan response\n\n" + summary + body);
     } catch (Exception error) { output.setText("Scan failed: " + error.getMessage()); }
   }
   static int count(String text, String needle) { int total = 0, at = 0; while ((at = text.indexOf(needle, at)) >= 0) { total++; at += needle.length(); } return total; }
+  static String aiSummary(String body) {
+    int start = body.indexOf("\"aiSignals\"");
+    if (start < 0) return "";
+    int end = body.indexOf("]", start);
+    if (end >= 0) end++;
+    else end = body.length();
+    String section = body.substring(start, end);
+    java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\"file\"\\s*:\\s*\"([^\"]+)\".*?\"score\"\\s*:\\s*(\\d+).*?\"confidence\"\\s*:\\s*\"([^\"]+)\".*?\"reasons\"\\s*:\\s*\\[(.*?)\\]", java.util.regex.Pattern.DOTALL);
+    java.util.regex.Matcher matcher = pattern.matcher(section);
+    StringBuilder result = new StringBuilder("AI-assisted code signals · pattern-based, not authorship proof\n");
+    boolean found = false;
+    while (matcher.find()) {
+      found = true;
+      String reasons = matcher.group(4).replace("\"", "").replace("\\,", ",");
+      result.append("  ").append(matcher.group(1)).append(" · ").append(matcher.group(2)).append("% · ").append(matcher.group(3)).append(" confidence · ").append(reasons).append("\n");
+    }
+    return found ? result.append("\n").toString() : "";
+  }
   public static void main(String[] args) {
     SwingUtilities.invokeLater(() -> {
       JFrame frame = new JFrame("CodeShield Mix · Java client"); frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); frame.setSize(820, 560);

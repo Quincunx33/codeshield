@@ -11,6 +11,13 @@ def collect(root):
             except OSError: pass
     return files
 
+def format_ai_signals(report):
+    signals = report.get('aiSignals', [])
+    if not signals: return ''
+    lines = [f"\\nAI-assisted code signals ({len(signals)} file(s)) · pattern-based, not authorship proof"]
+    lines.extend(f"  {item.get('score', 0)}% {item.get('confidence', 'unknown')} · {item.get('file')} · {'; '.join(item.get('reasons', []))}" for item in signals)
+    return '\\n'.join(lines) + '\\n'
+
 def main():
     parser = argparse.ArgumentParser(description='CodeShield Mix scanner — scan anonymously; use --cookie only to save history and access account features')
     parser.add_argument('project', help='Project directory')
@@ -37,6 +44,7 @@ def main():
     print(f"Files scanned: {report.get('filesScanned', 0)}")
     summary = report.get('summary', {})
     for severity in ('critical', 'high', 'medium', 'low', 'info'): print(f"{severity.upper():<9} {summary.get(severity, 0)}")
+    print(format_ai_signals(report), end='')
     print(f"\nFindings: {len(report.get('findings', []))}")
     for item in report.get('findings', [])[:20]: print(f"[{item['severity'].upper():8}] {item['file']}:{item['line']}  {item['title']} — {item['message']}")
     if args.json_path: print(f"\nJSON report saved to {args.json_path}")
