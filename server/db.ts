@@ -1,6 +1,6 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, findings, scanSources, scans, users } from "../drizzle/schema";
+import { InsertUser, findings, scanSources, scans, users, scheduledScans } from "../drizzle/schema";
 import type { ScanReport } from "../shared/scanner";
 import { ENV } from "./_core/env";
 
@@ -35,3 +35,8 @@ export async function createScan(userId: number, report: ScanReport, source?: { 
 }
 export async function listScans(userId: number) { const db = await getDb(); if (!db) return []; return db.select().from(scans).where(eq(scans.userId, userId)).orderBy(desc(scans.createdAt)).limit(30); }
 export async function getScan(userId: number, scanId: number) { const db = await getDb(); if (!db) return undefined; const scan = (await db.select().from(scans).where(eq(scans.id, scanId)).limit(1))[0]; if (!scan || scan.userId !== userId) return undefined; const source = (await db.select().from(scanSources).where(eq(scanSources.scanId, scanId)).limit(1))[0]; if (source && source.expiresAt.getTime() <= Date.now()) return undefined; const items = await db.select().from(findings).where(eq(findings.scanId, scanId)); return { scan, findings: items, source: source ?? null }; }
+export async function listScheduledScans(userId: number) { const db = await getDb(); if (!db) return []; return db.select().from(scheduledScans).where(eq(scheduledScans.userId, userId)).orderBy(desc(scheduledScans.createdAt)); }
+export async function createScheduledScanRecord(input: { userId: number; projectName: string; repositoryUrl: string; cronExpression: string; scheduleTaskUid: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const [row] = await db.insert(scheduledScans).values(input).$returningId(); return row.id; }
+export async function bindScheduledScanTask(id: number, userId: number, scheduleTaskUid: string) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.update(scheduledScans).set({ scheduleTaskUid }).where(and(eq(scheduledScans.id, id), eq(scheduledScans.userId, userId))); }
+export async function getScheduledScanByTaskUid(taskUid: string) { const db = await getDb(); if (!db) return undefined; return (await db.select().from(scheduledScans).where(eq(scheduledScans.scheduleTaskUid, taskUid)).limit(1))[0]; }
+export async function setScheduledScanEnabled(id: number, userId: number, enabled: number) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.update(scheduledScans).set({ enabled }).where(and(eq(scheduledScans.id, id), eq(scheduledScans.userId, userId))); }

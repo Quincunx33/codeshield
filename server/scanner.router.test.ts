@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appRouter } from "./routers";
+import { appRouter, cronExpressionSchema } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
 const base = { protocol: "https", headers: {} } as TrpcContext["req"];
@@ -19,6 +19,14 @@ describe("scanner router", () => {
   it("rejects an authenticated archive with no supported source files", async () => {
     const caller = appRouter.createCaller({ user, req: base, res: response });
     await expect(caller.scanner.run({ projectName: "empty archive", files: [], archiveBase64: Buffer.from("not-a-zip").toString("base64"), archiveName: "empty.zip" })).rejects.toThrow();
+  });
+  it("accepts the six-field UTC cron shape and rejects five-field input before scheduling", async () => {
+    expect(cronExpressionSchema.parse("0 0 9 * * *")).toBe("0 0 9 * * *");
+    expect(() => cronExpressionSchema.parse("0 9 * * *")).toThrow();
+  });
+  it("denies workspace membership review to a non-owner", async () => {
+    const caller = appRouter.createCaller({ user, req: base, res: response });
+    await expect(caller.workspace.members({ teamId: 999999 })).rejects.toThrow(/access denied/);
   });
   it("accepts an authenticated code scan without requiring a database in unit tests", async () => {
     const caller = appRouter.createCaller({ user, req: base, res: response });

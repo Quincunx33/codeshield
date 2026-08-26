@@ -19,5 +19,5 @@
 - [x] Replace language-list marketing copy with outcome-focused product copy throughout the dashboard
 - [x] Add GitHub/GitLab repository integration entry point and CI/CD quality-gate configuration (CI gate artifact added; provider repository import remains next step)
 - [x] Add a native C++ scanner engine foundation and shared JSON bridge
-- [ ] Add complete team workspace membership UI, invitations, and role-based access controls
-- [ ] Add recurring scan management UI and Heartbeat callback workflow using the platform's background scheduling path
+- [x] Add complete team workspace membership UI, invitations, and role-based access controls
+- [x] Add recurring scan management UI and Heartbeat callback workflow using the platform's background scheduling path
