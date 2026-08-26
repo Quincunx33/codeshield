@@ -161,3 +161,14 @@
 - [x] Correct the Python golden-report expectation and rerun shared Python/Java contract tests
 - [x] Capture mobile responsive layout evidence for the quality-score and AI-likelihood sections
 - [x] Publish a final quality-report checkpoint after all corrections pass
+
+# Long small-file stress pass
+
+- [x] Generate many independent small files across C, C++, Python, Java, Kotlin, JavaScript, and TypeScript
+- [x] Include clean, intentional-risk, safe-context, comment-only, duplicate, and AI-signal samples
+- [x] Run repeated local engine scans plus archive/API stress scans and record counts, score stability, and false positives; 300 repeated passes completed with zero failures
+- [x] Fix any defect found and add durable regression coverage; no defect found in this pass
+- [x] Run final client/build verification and publish the stress-tested release
+- [x] Add duplicate-code and explicit AI-likelihood small-file samples with assertions
+- [x] Run archive and live/API small-file stress scenarios and record results
+- [x] Run full final verification and save the stress-tested release checkpoint
