@@ -78,3 +78,14 @@
 - [x] Compare report totals and supported-file counts with the archive
 - [x] Inspect the reported High and Medium locations in source context
 - [x] Classify actionable risks versus scanner noise and explain confidence; assessment saved in docs/cipherchat-report-assessment.md
+
+# False-positive reduction
+
+- [x] Add context-aware exclusions for safe library calls and non-security randomness
+- [x] Reduce low-value duplicate and long-line noise from default security findings
+- [x] Preserve true-positive detection for secrets, eval, and shell/process execution with explicit C/C++/Python regression coverage
+- [x] Add uploaded-CipherChat regression fixtures and compare finding counts before/after with a durable checked fixture
+- [x] Add explicit C/C++/Python shell-process true-positive regression tests
+- [x] Add a durable fixture-based test for known CipherChat false-positive patterns and reduced severity counts
+- [x] Document the language scope of shell/process detection in scanner tests
+- [x] Add a checked CipherChat-style fixture bundle with expected safe-pattern findings and severity upper bounds

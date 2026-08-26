@@ -56,6 +56,7 @@ export function scanFiles(projectName: string, files: ScanInputFile[]): ScanRepo
   const aiSignals: AiSignal[] = [];
   const supported = files.filter((file) => languageFor(file.path) !== "unknown");
   const seenLines = new Map<string, { file: string; line: number; language: SupportedLanguage }>();
+  const duplicateCounts = new Map<string, number>();
   for (const file of supported) {
     const language = languageFor(file.path);
     const lines = file.content.split(/\r?\n/);
@@ -70,17 +71,27 @@ export function scanFiles(projectName: string, files: ScanInputFile[]): ScanRepo
         [/\b(eval|exec)\s*\(/i, "Dynamic code execution", "high", "Dynamic execution can execute attacker-controlled input.", "Avoid dynamic execution; use a safe parser or strict allow-list."],
         [/\b(system|popen)\s*\(/i, "Shell command execution", "high", "Shell execution can enable command injection when input is not strictly validated.", "Use a safe process API with argument arrays and validate all inputs."],
         [/\b(strcpy|strcat|sprintf|gets)\s*\(/i, "Unsafe C/C++ memory API", "high", "This API can cause buffer overflow or memory corruption.", "Use bounded alternatives and validate buffer sizes."],
-        [/\b(Math\.random|java\.util\.Random)\b/i, "Non-cryptographic randomness", "medium", "General-purpose randomness is not suitable for secrets or security tokens.", "Use a cryptographically secure random generator."],
       ];
-      for (const [pattern, title, severity, message, remediation] of risky) if (pattern.test(text)) findings.push(finding(`SEC${title.replace(/[^A-Z]/gi, "").slice(0, 5).toUpperCase()}`, severity, "security", title, message, remediation, file.path, line, language, raw));
+      for (const [pattern, title, severity, message, remediation] of risky) {
+        const safeFfmpegCall = title === "Dynamic code execution" && /\bffmpeg\.exec\s*\(/i.test(text);
+        const shellCallInSupportedLanguage = title !== "Shell command execution" || ["c", "cpp", "python"].includes(language);
+        if (pattern.test(text) && !safeFfmpegCall && shellCallInSupportedLanguage) findings.push(finding(`SEC${title.replace(/[^A-Z]/gi, "").slice(0, 5).toUpperCase()}`, severity, "security", title, message, remediation, file.path, line, language, raw));
+      }
+      const contextStart = Math.max(0, index - 10);
+      const contextEnd = Math.min(lines.length, index + 11);
+      const randomSecurityContext = /\b(secret|token|password|passwd|nonce|session|auth|otp|csrf|credential|api[_-]?key)\b/i.test(lines.slice(contextStart, contextEnd).join("\n"));
+      if (/\b(Math\.random|java\.util\.Random)\b/i.test(text) && randomSecurityContext) findings.push(finding("SECNCR", "medium", "security", "Non-cryptographic randomness", "General-purpose randomness is used in a file that handles security-sensitive material; confirm it is not used for a secret or security token.", "Use a cryptographically secure random generator for secrets, tokens, nonces, and authentication values.", file.path, line, language, raw));
       if (/\b(TODO|FIXME|HACK)\b/i.test(text)) findings.push(finding("QLT001", "low", "quality", "Unresolved work marker", "This line contains a TODO, FIXME, or HACK marker.", "Resolve the marker or track it as a documented issue before release.", file.path, line, language, raw));
       const normalized = text.replace(/\s+/g, " ").trim();
       if (normalized.length >= 50 && !normalized.startsWith("//") && !normalized.startsWith("#") && !normalized.startsWith("/*")) {
         const previous = seenLines.get(normalized);
-        if (previous && previous.file !== file.path) findings.push(finding("DUP001", "low", "duplication", "Repeated code signal", `This line closely matches ${previous.file}:${previous.line} in another file.`, "Extract shared logic into a reusable function or module.", file.path, line, language, raw));
-        else seenLines.set(normalized, { file: file.path, line, language });
+        if (previous && previous.file !== file.path) {
+          const pairKey = [previous.file, file.path].sort().join("::");
+          const count = duplicateCounts.get(pairKey) ?? 0;
+          if (count < 5) { findings.push(finding("DUP001", "low", "duplication", "Repeated code signal", `This line closely matches ${previous.file}:${previous.line} in another file.`, "Extract shared logic into a reusable function or module.", file.path, line, language, raw)); duplicateCounts.set(pairKey, count + 1); }
+        } else seenLines.set(normalized, { file: file.path, line, language });
       }
-      if (text.length > 140) findings.push(finding("QLT002", "info", "quality", "Long source line", "Long lines reduce readability and can hide defects during review.", "Split the expression or apply the language formatter.", file.path, line, language, raw));
+      if (text.length > 220) findings.push(finding("QLT002", "info", "quality", "Long source line", "Very long lines reduce readability and can hide defects during review.", "Split the expression or apply the language formatter.", file.path, line, language, raw));
       if (language === "python" && /except\s*:/i.test(lower)) findings.push(finding("QLT003", "medium", "quality", "Broad exception handler", "Catching every exception can hide defects and make failures difficult to diagnose.", "Catch the narrowest expected exception types and log meaningful context.", file.path, line, language, raw));
     });
   }

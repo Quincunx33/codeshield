@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { deriveProjectName, scanFiles } from "../shared/scanner";
+import { cipherchatExpected, cipherchatStyleFiles } from "./fixtures/cipherchat-style";
 
 describe("shared scanner contract", () => {
   it("derives a usable project name for blank-name archive scans", () => {
@@ -41,6 +42,38 @@ describe("shared scanner contract", () => {
     expect(report.findings.some((item) => item.title === "Dynamic code execution" && item.line === 2)).toBe(true);
     expect(report.summary.critical).toBe(1);
     expect(report.findings[0]?.severity).toBe("critical");
+  });
+  it("does not flag safe library execution or non-security randomness", () => {
+    const report = scanFiles("safe-context", [
+      { path: "src/compressor.ts", content: "await ffmpeg.exec(['-i', inputName, outputName]);" },
+      { path: "src/profile.ts", content: "const username = 'user-' + Math.random();" },
+      { path: "src/reactions.ts", content: "if (reaction && Math.random() > 0.25) return null;" },
+    ]);
+    expect(report.findings.filter((item) => item.title === "Dynamic code execution")).toEqual([]);
+    expect(report.findings.filter((item) => item.title === "Non-cryptographic randomness")).toEqual([]);
+  });
+  it("preserves shell/process true positives within the documented language scope", () => {
+    const report = scanFiles("shell-positive", [
+      { path: "unsafe.c", content: "system(user_input);" },
+      { path: "unsafe.cpp", content: "popen(command, \"r\");" },
+      { path: "unsafe.py", content: "import os\\nos.system(command)" },
+      { path: "safe.ts", content: "System (label);\\nawait ffmpeg.exec(args);" },
+    ]);
+    const shellFindings = report.findings.filter((item) => item.title === "Shell command execution");
+    expect(shellFindings.map((item) => item.file)).toEqual(["unsafe.c", "unsafe.cpp", "unsafe.py"]);
+    expect(report.findings.some((item) => item.file === "safe.ts" && item.title === "Shell command execution")).toBe(false);
+  });
+  it("keeps known CipherChat safe patterns free of security findings and bounds true positives", () => {
+    const report = scanFiles("cipherchat-safe-fixture", cipherchatStyleFiles);
+    const safeSecurityFindings = report.findings.filter((item) => cipherchatExpected.securitySafeFiles.includes(item.file) && item.category === "security");
+    expect(safeSecurityFindings).toEqual([]);
+    expect(report.findings.some((item) => item.file === cipherchatExpected.truePositiveFile && item.title === "Shell command execution")).toBe(true);
+    expect(report.summary.high).toBeLessThanOrEqual(cipherchatExpected.maxHigh);
+    expect(report.summary.medium).toBeLessThanOrEqual(cipherchatExpected.maxMedium);
+  });
+  it("flags randomness when the same file handles security material", () => {
+    const report = scanFiles("security-context", [{ path: "src/auth.ts", content: "const token = process.env.TOKEN;\nconst nonce = Math.random();" }]);
+    expect(report.findings.some((item) => item.title === "Non-cryptographic randomness" && item.line === 2)).toBe(true);
   });
   it("scans JavaScript and TypeScript using the shared report shape", () => {
     const report = scanFiles("web-project", [{ path: "src/app.ts", content: 'const token = "secret-value-123";\nconst result = eval(input);' }, { path: "src/client.jsx", content: "function render() { return <div />; }" }]);
