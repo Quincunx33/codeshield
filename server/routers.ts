@@ -34,20 +34,19 @@ export const appRouter = router({
   }),
   scanner: router({
     demo: publicProcedure.query(() => scanFiles("Demo project", demoFiles())),
-    run: protectedProcedure.input(z.object({ projectName: z.string().min(1).max(180), files: z.array(fileSchema).max(400).default([]), archiveBase64: z.string().max(8_000_000).optional(), archiveName: z.string().max(255).optional() })).mutation(async ({ ctx, input }) => {
+    run: publicProcedure.input(z.object({ projectName: z.string().min(1).max(180), files: z.array(fileSchema).max(400).default([]), archiveBase64: z.string().max(8_000_000).optional(), archiveName: z.string().max(255).optional() })).mutation(async ({ ctx, input }) => {
       let files = input.files;
       let source: { storageKey: string; originalName: string } | undefined;
       if (input.archiveBase64) {
         const raw = Buffer.from(input.archiveBase64, "base64");
         if (raw.length > 6_000_000) throw new Error("Archive exceeds the 6 MB temporary upload limit");
-        const storage = await storagePut(`temporary-scans/${ctx.user.id}/${nanoid(16)}.zip`, raw, "application/zip");
-        source = { storageKey: storage.key, originalName: input.archiveName || "source.zip" };
+        if (ctx.user) { const storage = await storagePut(`temporary-scans/${ctx.user.id}/${nanoid(16)}.zip`, raw, "application/zip"); source = { storageKey: storage.key, originalName: input.archiveName || "source.zip" }; }
         const zip = new AdmZip(raw);
         files = zip.getEntries().filter((entry) => !entry.isDirectory && !entry.entryName.includes("..") && !entry.entryName.startsWith("/") && /\.(c|h|cc|cpp|cxx|hpp|py|java)$/i.test(entry.entryName)).slice(0, 400).map((entry) => ({ path: entry.entryName, content: entry.getData().toString("utf8").slice(0, 300_000) }));
       }
       if (!files.length) throw new Error("Provide source code or an archive containing supported files");
       const report = scanFiles(input.projectName, files);
-      const scanId = await createScan(ctx.user.id, report, source);
+      const scanId = ctx.user ? await createScan(ctx.user.id, report, source) : undefined;
       return { ...report, scanId };
     }),
     history: protectedProcedure.query(({ ctx }) => listScans(ctx.user.id)),

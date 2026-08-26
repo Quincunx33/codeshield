@@ -21,3 +21,9 @@
 - [x] Add a native C++ scanner engine foundation and shared JSON bridge
 - [x] Add complete team workspace membership UI, invitations, and role-based access controls
 - [x] Add recurring scan management UI and Heartbeat callback workflow using the platform's background scheduling path
+
+# Anonymous scan change
+
+- [x] Allow unauthenticated code and ZIP scans without creating persisted scan history or temporary source records
+- [x] Update dashboard, Python CLI, and Java client messaging so login is only required for saved history, teams, and recurring scans
+- [x] Add tests for anonymous scan success and authenticated persistence behavior

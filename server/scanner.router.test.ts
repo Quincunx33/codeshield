@@ -12,9 +12,11 @@ describe("scanner router", () => {
     expect(report.schemaVersion).toBe("1.0");
     expect(report.findings.every((item) => item.file && item.line > 0)).toBe(true);
   });
-  it("requires authentication for persisted scans", async () => {
+  it("allows anonymous scans without creating persisted history", async () => {
     const caller = appRouter.createCaller({ user: null, req: base, res: response });
-    await expect(caller.scanner.run({ projectName: "unauthorized", files: [{ path: "x.py", content: "print(1)" }] })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    const report = await caller.scanner.run({ projectName: "anonymous", files: [{ path: "x.py", content: "print('ok')" }] });
+    expect(report.findings).toEqual([]);
+    expect(report.scanId).toBeUndefined();
   });
   it("rejects an authenticated archive with no supported source files", async () => {
     const caller = appRouter.createCaller({ user, req: base, res: response });

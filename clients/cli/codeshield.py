@@ -12,7 +12,7 @@ def collect(root):
     return files
 
 def main():
-    parser = argparse.ArgumentParser(description='CodeShield Mix source security and quality scanner')
+    parser = argparse.ArgumentParser(description='CodeShield Mix scanner — scan anonymously; use --cookie only to save history and access account features')
     parser.add_argument('project', help='Project directory')
     parser.add_argument('--server', default='http://localhost:3000/api/trpc', help='Shared API base')
     parser.add_argument('--project-name', default=None)
@@ -33,6 +33,7 @@ def main():
         print(f'Unable to reach CodeShield API: {error}', file=sys.stderr); return 1
     if args.json_path: pathlib.Path(args.json_path).write_text(json.dumps(report, indent=2), encoding='utf-8')
     print(f"\nCodeShield Mix · {report.get('projectName', 'project')}\n{'─' * 58}")
+    if not cookie: print("Anonymous scan · add --cookie only when saved history or team features are needed")
     print(f"Files scanned: {report.get('filesScanned', 0)}")
     summary = report.get('summary', {})
     for severity in ('critical', 'high', 'medium', 'low', 'info'): print(f"{severity.upper():<9} {summary.get(severity, 0)}")
