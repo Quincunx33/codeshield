@@ -27,3 +27,9 @@
 - [x] Allow unauthenticated code and ZIP scans without creating persisted scan history or temporary source records
 - [x] Update dashboard, Python CLI, and Java client messaging so login is only required for saved history, teams, and recurring scans
 - [x] Add tests for anonymous scan success and authenticated persistence behavior
+
+# ZIP scan bug
+
+- [x] Diagnose why a selected ZIP archive does not produce scan results
+- [x] Fix archive encoding, validation, extraction, or result rendering as needed
+- [x] Add a regression test for anonymous ZIP scanning with supported source files

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import AdmZip from "adm-zip";
 import { appRouter, cronExpressionSchema } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
@@ -16,6 +17,14 @@ describe("scanner router", () => {
     const caller = appRouter.createCaller({ user: null, req: base, res: response });
     const report = await caller.scanner.run({ projectName: "anonymous", files: [{ path: "x.py", content: "print('ok')" }] });
     expect(report.findings).toEqual([]);
+    expect(report.scanId).toBeUndefined();
+  });
+  it("scans an anonymous ZIP containing supported source files", async () => {
+    const zip = new AdmZip();
+    zip.addFile("project/app.py", Buffer.from("API_KEY = 'secret-value'\\nprint('ok')"));
+    const report = await appRouter.createCaller({ user: null, req: base, res: response }).scanner.run({ projectName: "zip-anonymous", files: [], archiveBase64: zip.toBuffer().toString("base64"), archiveName: "project.zip" });
+    expect(report.filesScanned).toBe(1);
+    expect(report.findings.some((item) => item.file === "project/app.py")).toBe(true);
     expect(report.scanId).toBeUndefined();
   });
   it("rejects an authenticated archive with no supported source files", async () => {
