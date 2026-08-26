@@ -62,3 +62,12 @@
 - [x] Test AI-signal serialization and cross-client output consistency
 - [x] Render explicit AI-likelihood file/score/confidence/reason summaries in the Java client
 - [x] Add deterministic CLI and Java output-format checks for AI signals
+
+# Evidence-rich report improvement
+
+- [x] Add exact line ranges, matched evidence snippets, score breakdown, and verification guidance to AI signals
+- [x] Keep dashboard and HTML reports concise with expandable evidence instead of dumping raw detail
+- [x] Add focused tests for evidence fields and compact report rendering
+- [x] Add compact disclosure-style evidence details to HTML AI-signal reports
+- [x] Assert populated line range, evidence, score breakdown, verification, and remediation fields in scanner tests
+- [x] Verify HTML includes the evidence-rich AI signal details

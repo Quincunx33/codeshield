@@ -25,6 +25,12 @@ describe("shared scanner contract", () => {
     expect(signal?.score).toBeGreaterThanOrEqual(65);
     expect(signal?.confidence).toBe("high");
     expect(signal?.reasons.length).toBeGreaterThan(1);
+    expect(signal?.lineStart).toBeGreaterThan(0);
+    expect(signal?.lineEnd).toBeGreaterThanOrEqual(signal?.lineStart ?? 0);
+    expect(signal?.evidence).toContain("Here is");
+    expect(signal?.scoreBreakdown.phrasing).toBe(25);
+    expect(signal?.verification).toContain("Review");
+    expect(signal?.remediation).toContain("human review");
     expect(scanFiles("ordinary", [{ path: "main.py", content: "x = 1\\nprint(x)" }]).aiSignals).toEqual([]);
   });
   it("detects deterministic risks with exact file and line references", () => {
