@@ -1,28 +1,34 @@
+import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { createScan, getScan, listScans } from "./db";
+import { demoFiles, scanFiles } from "../shared/scanner";
+import { invokeLLM } from "./_core/llm";
 
+const fileSchema = z.object({ path: z.string().min(1).max(500), content: z.string().max(300_000) });
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
-  auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+  auth: router({ me: publicProcedure.query((opts) => opts.ctx.user), logout: publicProcedure.mutation(({ ctx }) => { ctx.res.clearCookie(COOKIE_NAME, { ...getSessionCookieOptions(ctx.req), maxAge: -1 }); return { success: true } as const; }) }),
+  scanner: router({
+    demo: publicProcedure.query(() => scanFiles("Demo project", demoFiles())),
+    run: protectedProcedure.input(z.object({ projectName: z.string().min(1).max(180), files: z.array(fileSchema).min(1).max(400) })).mutation(async ({ ctx, input }) => {
+      const report = scanFiles(input.projectName, input.files);
+      const scanId = await createScan(ctx.user.id, report);
+      return { ...report, scanId };
+    }),
+    history: protectedProcedure.query(({ ctx }) => listScans(ctx.user.id)),
+    detail: protectedProcedure.input(z.object({ scanId: z.number().int().positive() })).query(({ ctx, input }) => getScan(ctx.user.id, input.scanId)),
+    explain: protectedProcedure.input(z.object({ title: z.string(), message: z.string(), remediation: z.string(), language: z.string(), snippet: z.string().optional() })).mutation(async ({ input }) => {
+      const response = await invokeLLM({ messages: [
+        { role: "system", content: "You explain deterministic code scanner findings. Return concise, practical JSON with riskExplanation and remediationSuggestion. Never claim a finding is valid without the rule evidence. Do not include secrets from the snippet." },
+        { role: "user", content: JSON.stringify({ finding: input }) },
+      ], response_format: { type: "json_schema", json_schema: { name: "finding_explanation", strict: true, schema: { type: "object", properties: { riskExplanation: { type: "string" }, remediationSuggestion: { type: "string" } }, required: ["riskExplanation", "remediationSuggestion"], additionalProperties: false } } } });
+      const content = response.choices?.[0]?.message?.content;
+      if (typeof content !== "string") throw new Error("No explanation returned");
+      return JSON.parse(content) as { riskExplanation: string; remediationSuggestion: string };
     }),
   }),
-
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
 });
-
 export type AppRouter = typeof appRouter;

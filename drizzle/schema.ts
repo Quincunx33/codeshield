@@ -1,17 +1,7 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, json, longtext, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
-/**
- * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
- */
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -22,7 +12,46 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
+export const scans = mysqlTable("scans", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  projectName: varchar("projectName", { length: 180 }).notNull(),
+  status: mysqlEnum("status", ["completed", "failed"]).default("completed").notNull(),
+  filesScanned: int("filesScanned").notNull(),
+  criticalCount: int("criticalCount").notNull().default(0),
+  highCount: int("highCount").notNull().default(0),
+  mediumCount: int("mediumCount").notNull().default(0),
+  lowCount: int("lowCount").notNull().default(0),
+  infoCount: int("infoCount").notNull().default(0),
+  sourceKey: varchar("sourceKey", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const findings = mysqlTable("findings", {
+  id: int("id").autoincrement().primaryKey(),
+  scanId: int("scanId").notNull(),
+  ruleId: varchar("ruleId", { length: 32 }).notNull(),
+  severity: mysqlEnum("severity", ["critical", "high", "medium", "low", "info"]).notNull(),
+  category: mysqlEnum("category", ["security", "quality", "duplication"]).notNull(),
+  title: varchar("title", { length: 240 }).notNull(),
+  message: text("message").notNull(),
+  remediation: text("remediation").notNull(),
+  explanation: text("explanation"),
+  file: varchar("file", { length: 500 }).notNull(),
+  line: int("line").notNull(),
+  language: varchar("language", { length: 32 }).notNull(),
+  snippet: text("snippet"),
+});
+
+export const scanSources = mysqlTable("scanSources", {
+  id: int("id").autoincrement().primaryKey(),
+  scanId: int("scanId").notNull(),
+  storageKey: varchar("storageKey", { length: 500 }).notNull(),
+  originalName: varchar("originalName", { length: 255 }).notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
-
-// TODO: Add your tables here
+export type Scan = typeof scans.$inferSelect;
+export type FindingRow = typeof findings.$inferSelect;

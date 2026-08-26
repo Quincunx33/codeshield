@@ -1,5 +1,20 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1787703616426,
+      "tag": "0000_lonely_the_twelve",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1787703722070,
+      "tag": "0001_material_pepper_potts",
+      "breakpoints": true
+    }
+  ]
 }
