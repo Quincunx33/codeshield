@@ -17,6 +17,13 @@ export type Finding = {
 };
 
 export type ScanInputFile = { path: string; content: string };
+
+export function deriveProjectName(providedName: string | undefined, archiveName?: string): string {
+  const explicit = providedName?.trim();
+  if (explicit) return explicit;
+  const derived = archiveName?.replace(/\.zip$/i, "").replace(/[-_]+/g, " ").trim();
+  return derived || "Uploaded archive";
+}
 export type ScanReport = {
   schemaVersion: "1.0";
   scanId?: number;

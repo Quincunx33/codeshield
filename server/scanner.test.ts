@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { scanFiles } from "../shared/scanner";
+import { deriveProjectName, scanFiles } from "../shared/scanner";
 
 describe("shared scanner contract", () => {
+  it("derives a usable project name for blank-name archive scans", () => {
+    expect(deriveProjectName("", "CipherChat6-main (1).zip")).toBe("CipherChat6 main (1)");
+    expect(deriveProjectName(undefined, "")).toBe("Uploaded archive");
+    expect(deriveProjectName("  My project  ", "other.zip")).toBe("My project");
+  });
   it("detects deterministic risks with exact file and line references", () => {
     const report = scanFiles("fixture", [{ path: "src/main.py", content: 'API_KEY = "secret-value-123"\nvalue = eval(input())\n# TODO: rotate key' }]);
     expect(report.schemaVersion).toBe("1.0");

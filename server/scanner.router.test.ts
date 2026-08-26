@@ -19,6 +19,10 @@ describe("scanner router", () => {
     expect(report.findings).toEqual([]);
     expect(report.scanId).toBeUndefined();
   });
+  it("rejects an empty project name at the API boundary with a clear validation error", async () => {
+    const caller = appRouter.createCaller({ user: null, req: base, res: response });
+    await expect(caller.scanner.run({ projectName: "", files: [{ path: "Main.py", content: "print('ok')" }] })).rejects.toThrow();
+  });
   it("scans an anonymous ZIP containing supported source files", async () => {
     const zip = new AdmZip();
     zip.addFile("project/app.py", Buffer.from("API_KEY = 'secret-value'\\nprint('ok')"));

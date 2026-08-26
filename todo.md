@@ -39,3 +39,9 @@
 - [x] Remove demo report fallback and show an empty state before the first real scan
 - [x] Correct ZIP archive path handling so top-level and nested supported files are retained with valid references; regression covers both
 - [x] Add regression coverage for ZIP entries and real-scan-only initial rendering; visually verified empty initial state
+
+# Project-name validation bug
+
+- [x] Allow ZIP scans with a blank project name by deriving a safe name from the archive filename
+- [x] Validate pasted-code scans with a clear project-name message before sending the request
+- [x] Add regression coverage for blank project name ZIP scans, including shared derivation helper cases
