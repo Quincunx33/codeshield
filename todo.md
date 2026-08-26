@@ -131,3 +131,17 @@
 - [x] Exercise API failures, repeated scans, and live dashboard scan smoke checks
 - [x] Verify CLI/Java output consistency against the shared API response
 - [x] Fix newly verified commented-code false positives and add durable regression
+
+# Scan progress UX
+
+- [x] Add animated scan loading state with clear progress stages and status text
+- [x] Add real-time indeterminate activity indicator while a scan request is running; exact percentage intentionally not claimed without server progress events
+- [x] Preserve accessible reduced-motion and error/completion states
+- [x] Add progress-state tests and verify responsive dashboard visuals
+
+# Progress truthfulness follow-up
+
+- [x] Replace simulated percentage claims with truthful indeterminate activity while server scan phases are unavailable
+- [x] Verify the pending loading state in a delayed browser-driven desktop scan and responsive mobile layout
+- [x] Add durable progress helper regression coverage and preserve existing success/error mutation handling
+- [x] Align progress regressions with the active Home.tsx pending panel and remove unused percentage helper logic

@@ -1,0 +1,3 @@
+# Scan progress UX smoke verification
+
+A delayed local-preview scan was submitted through the real dashboard form on 2026-08-26. While the request was pending, the UI showed `Scanning…`, current activity text (`Running deterministic rules`), `Live activity · the engine is still working`, four stage labels (`Preparing source`, `Rules`, `Ranking evidence`, `Report`), and an accessible `role=progressbar` with `aria-valuetext="Code analysis is in progress"`. The bar is intentionally indeterminate because the synchronous scanner API does not expose numeric server-side progress. The dashboard then completed normally with the expected report result.
