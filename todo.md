@@ -13,3 +13,11 @@
 - [x] Add automated tests for scanner API procedures, persistence/history retrieval, report generation, CLI syntax/behavior, and Java client compilation/contract behavior
 - [x] Verify upload/auth/error boundaries, production build, responsive UI, Python CLI syntax, and Java compilation
 - [x] Fix demo report findings list to use the visible fallback report when no authenticated scan has run
+
+# Refinement backlog
+
+- [x] Replace language-list marketing copy with outcome-focused product copy throughout the dashboard
+- [x] Add GitHub/GitLab repository integration entry point and CI/CD quality-gate configuration (CI gate artifact added; provider repository import remains next step)
+- [x] Add a native C++ scanner engine foundation and shared JSON bridge
+- [ ] Add complete team workspace membership UI, invitations, and role-based access controls
+- [ ] Add recurring scan management UI and Heartbeat callback workflow using the platform's background scheduling path

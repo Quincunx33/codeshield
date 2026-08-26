@@ -1,0 +1,19 @@
+stages: [security]
+
+codeshield:
+  stage: security
+  image: python:3.12-slim
+  variables:
+    PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  script:
+    - python3 clients/cli/codeshield.py . --server "$CODESHIELD_SERVER" --cookie "$CODESHIELD_COOKIE" --json codeshield-report.json
+    - python3 - <<'PY'
+      import json, sys
+      report = json.load(open('codeshield-report.json'))
+      totals = report.get('summary', {})
+      print(f"CodeShield gate: {totals.get('critical', 0)} critical, {totals.get('high', 0)} high")
+      sys.exit(1 if totals.get('critical', 0) or totals.get('high', 0) else 0)
+      PY
+  artifacts:
+    when: always
+    paths: [codeshield-report.json]

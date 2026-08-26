@@ -43,6 +43,30 @@ export const findings = mysqlTable("findings", {
   snippet: text("snippet"),
 });
 
+export const teams = mysqlTable("teams", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 160 }).notNull(),
+  ownerId: int("ownerId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export const teamMembers = mysqlTable("teamMembers", {
+  id: int("id").autoincrement().primaryKey(),
+  teamId: int("teamId").notNull(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("teamRole", ["owner", "admin", "member"]).default("member").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export const scheduledScans = mysqlTable("scheduledScans", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  projectName: varchar("projectName", { length: 180 }).notNull(),
+  repositoryUrl: varchar("repositoryUrl", { length: 500 }).notNull(),
+  cronExpression: varchar("cronExpression", { length: 80 }).notNull(),
+  scheduleTaskUid: varchar("scheduleTaskUid", { length: 65 }),
+  enabled: int("enabled").notNull().default(1),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export const scanSources = mysqlTable("scanSources", {
   id: int("id").autoincrement().primaryKey(),
   scanId: int("scanId").notNull(),
