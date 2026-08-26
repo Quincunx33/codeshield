@@ -71,3 +71,10 @@
 - [x] Add compact disclosure-style evidence details to HTML AI-signal reports
 - [x] Assert populated line range, evidence, score breakdown, verification, and remediation fields in scanner tests
 - [x] Verify HTML includes the evidence-rich AI signal details
+
+# Uploaded report validation
+
+- [x] Safely inventory the uploaded CipherChat ZIP without executing project code
+- [x] Compare report totals and supported-file counts with the archive
+- [x] Inspect the reported High and Medium locations in source context
+- [x] Classify actionable risks versus scanner noise and explain confidence; assessment saved in docs/cipherchat-report-assessment.md
