@@ -112,3 +112,14 @@
 - [x] Scan every new fixture and record severity/category results
 - [x] Add durable assertions for expected findings and clean-project behavior
 - [x] Correct any rule gaps revealed by the independent fixtures; no new gaps found
+
+# Deep verification pass
+
+- [x] Inspect scanner rule boundaries, archive extraction, API validation, and client contracts
+- [x] Test all supported languages with true-positive, clean, and safe-context samples
+- [x] Test ZIP traversal, malformed archives, unsupported files, empty archives, and size boundaries
+- [x] Run deterministic repeatability, input fuzz, large-file, and multi-file stress checks
+- [x] Verify web API, JSON/HTML reports, Python CLI, Java client, and production build together
+- [x] Fix verified client serialization defect and add a regression test
+- [x] Fix Python CLI and Java desktop client tRPC payload/route formatting discovered by live HTTP smoke test
+- [x] Add executable live-contract checks for both external clients against the running API

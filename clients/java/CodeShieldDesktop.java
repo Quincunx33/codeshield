@@ -3,20 +3,23 @@ import java.awt.*;
 import java.net.URI;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 public class CodeShieldDesktop {
   static String server = System.getenv().getOrDefault("CODESHIELD_SERVER", "http://localhost:3000/api/trpc");
   static String cookie = System.getenv().getOrDefault("CODESHIELD_COOKIE", "");
   static JTextArea output = new JTextArea();
   static String jsonEscape(String value) { return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"); }
+  static String buildPayload(String source) { return "{\"json\":{\"projectName\":\"Java desktop sample\",\"files\":[{\"path\":\"src/Sample.py\",\"content\":\"" + jsonEscape(source) + "\"}]}}"; }
   static void scan() {
-    String source = "API_KEY = \\\"desktop-demo-secret\\\"\\nvalue = eval(user_input)";
-    String payload = "{\\\"json\\\":{\\\"0\\\":{\\\"json\\\":{\\\"projectName\\\":\\\"Java desktop sample\\\",\\\"files\\\":[{\\\"path\\\":\\\"src/Sample.py\\\",\\\"content\\\":\\\"" + jsonEscape(source) + "\\\"}]}}}}";
+    String source = "API_KEY = \"desktop-demo-secret\"\nvalue = eval(user_input)";
+    String payload = buildPayload(source);
     try {
       HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(server + "/scanner.run")).header("Content-Type", "application/json");
       if (!cookie.isBlank()) builder.header("Cookie", cookie);
       HttpRequest request = builder.POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8)).build();
-      HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+      HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(10)).build();
+      HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
       String body = response.body();
       String summary = "Status: " + response.statusCode() + "\n" + "Critical: " + count(body, "critical") + "  High: " + count(body, "high") + "  Medium: " + count(body, "medium") + "\n\n";
       String access = cookie.isBlank() ? "Anonymous scan · login/session is only needed for saved history and team features\n\n" : "Authenticated scan · this result can be saved to history\n\n";

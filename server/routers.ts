@@ -16,6 +16,7 @@ import { listScheduledScans, createScheduledScanRecord, setScheduledScanEnabled 
 import { storagePut } from "./storage";
 
 const fileSchema = z.object({ path: z.string().min(1).max(500), content: z.string().max(300_000) });
+const maxArchiveBase64Length = 8_400_000;
 export const cronExpressionSchema = z.string().regex(/^0 \d{1,2} \d{1,2} \* \* \*$/);
 export const appRouter = router({
   system: systemRouter,
@@ -34,7 +35,7 @@ export const appRouter = router({
   }),
   scanner: router({
     demo: publicProcedure.query(() => scanFiles("Demo project", demoFiles())),
-    run: publicProcedure.input(z.object({ projectName: z.string().min(1).max(180), files: z.array(fileSchema).max(400).default([]), archiveBase64: z.string().max(8_000_000).optional(), archiveName: z.string().max(255).optional() })).mutation(async ({ ctx, input }) => {
+    run: publicProcedure.input(z.object({ projectName: z.string().min(1).max(180), files: z.array(fileSchema).max(400).default([]), archiveBase64: z.string().max(maxArchiveBase64Length).optional(), archiveName: z.string().max(255).optional() })).mutation(async ({ ctx, input }) => {
       let files = input.files;
       let source: { storageKey: string; originalName: string } | undefined;
       if (input.archiveBase64) {

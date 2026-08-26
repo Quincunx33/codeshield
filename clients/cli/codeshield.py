@@ -11,6 +11,9 @@ def collect(root):
             except OSError: pass
     return files
 
+def build_payload(project_name, files):
+    return {'json': {'projectName': project_name, 'files': files}}
+
 def format_ai_signals(report):
     signals = report.get('aiSignals', [])
     if not signals: return ''
@@ -28,7 +31,7 @@ def main():
     args = parser.parse_args()
     files = collect(args.project)
     if not files: print('No supported source files found.', file=sys.stderr); return 2
-    payload = {'json': {'0': {'json': {'projectName': args.project_name or pathlib.Path(args.project).name, 'files': files}}}}
+    payload = build_payload(args.project_name or pathlib.Path(args.project).name, files)
     headers = {'Content-Type': 'application/json'}
     cookie = args.cookie or __import__('os').environ.get('CODESHIELD_COOKIE')
     if cookie: headers['Cookie'] = cookie
