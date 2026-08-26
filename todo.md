@@ -172,3 +172,11 @@
 - [x] Add duplicate-code and explicit AI-likelihood small-file samples with assertions
 - [x] Run archive and live/API small-file stress scenarios and record results
 - [x] Run full final verification and save the stress-tested release checkpoint
+
+# Genuine one-hour timed stress test
+
+- [x] Prepare a reproducible wall-clock harness with explicit start/end timestamps
+- [x] Run continuous small-file local scans and real archive/API requests for exactly 3,600,000 ms
+- [x] Monitor and record iterations, files, requests, failures, latency, deterministic mismatches, and false positives
+- [x] Analyze the measured log and add any needed regression coverage; no new regression required
+- [x] Run post-hour final verification and publish only after the timed run is complete

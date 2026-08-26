@@ -7,3 +7,7 @@ A 300-iteration repeated stress loop completed with zero failures. Every iterati
 ## Archive/API stress
 
 A real ZIP containing six small files was submitted through the running `/api/trpc/scanner.run` endpoint in 40 concurrent requests. All 40 returned valid reports in 174 ms total, with deterministic findings, summary, quality score, and AI-signal output across responses. Each report preserved the intentional C shell true positive, ignored commented-out security-looking code, reported five findings, returned a 9.1/10 quality score, and produced one AI-likelihood signal.
+
+## Genuine one-hour timed run
+
+The timed harness ran for exactly 3,600,000 ms, from 2026-08-26T13:38:08.962Z through 2026-08-26T14:38:08.962Z. It completed 1,340,694 local deterministic iterations and 1,340,694 real archive/API requests, scanning 13,406,940 small files. Failures: 0. False-positive violations: 0. Deterministic mismatches: 0. Average API latency: 2 ms. Maximum API latency: 52 ms. The process exited with an empty error field.
