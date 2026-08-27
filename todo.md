@@ -237,3 +237,9 @@
 - [x] Add configurable CI quality-gate severity threshold and documentation
 - [x] Audit working tree, tracked files, and repository history for secrets or sensitive artifacts
 - [x] Run tests/build/security checks, remove any sensitive content found, and push only safe code to the private repository
+
+# GitHub Actions workflow
+
+- [x] Add a GitHub Actions workflow that runs CodeShield tests, typecheck, build, and configurable quality gate
+- [x] Validate workflow YAML, permissions, secret handling, and repository-sensitive content
+- [ ] Push the workflow to the private GitHub repository and verify remote visibility and workflow file

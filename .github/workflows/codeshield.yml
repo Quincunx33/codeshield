@@ -1,0 +1,68 @@
+name: CodeShield quality gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeshield-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CODESHIELD_SERVER: https://codeshldmix-6okjdbit.manus.space/api/trpc
+  CODESHIELD_FAIL_ON: ${{ vars.CODESHIELD_FAIL_ON || 'high' }}
+
+jobs:
+  verify:
+    name: Verify and scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Typecheck
+        run: pnpm check
+
+      - name: Build
+        run: pnpm build
+
+      - name: Scan repository anonymously
+        run: python3 clients/cli/codeshield.py . --server "$CODESHIELD_SERVER" --json codeshield-report.json
+
+      - name: Enforce severity gate
+        run: pnpm quality:gate codeshield-report.json
+
+      - name: Upload CodeShield report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeshield-report
+          path: codeshield-report.json
+          if-no-files-found: ignore
