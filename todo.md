@@ -207,3 +207,11 @@
 - [x] Move plain-language result regression into the active Vitest test glob and rerun typecheck/build
 - [x] Document completed-scan browser smoke evidence for verdict, finding cards, technical disclosure, and responsive layout
 - [x] Add a source-level responsive contract assertion for the result panel classes
+
+# Visible line-level finding evidence
+
+- [x] Preserve exact source line context for every finding through scan and archive flows
+- [x] Include both source locations for duplicate-code findings when authoritative data exists
+- [x] Show line-numbered code context visibly in each dashboard finding card
+- [x] Add regression tests for snippets, missing-source handling, and duplicate locations
+- [x] Verify real ZIP and pasted scans, then publish the evidence update

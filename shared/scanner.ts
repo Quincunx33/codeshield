@@ -13,6 +13,7 @@ export type Finding = {
   line: number;
   language: SupportedLanguage;
   snippet?: string;
+  related?: { file: string; line: number; snippet: string };
   explanation?: string;
 };
 
@@ -48,8 +49,8 @@ function languageFor(path: string): SupportedLanguage {
   const ext = path.split(".").pop()?.toLowerCase() ?? "";
   return extMap[ext] ?? "unknown";
 }
-function finding(ruleId: string, severity: Severity, category: Finding["category"], title: string, message: string, remediation: string, file: string, line: number, language: SupportedLanguage, snippet: string): Finding {
-  return { id: `${ruleId}-${file}-${line}`.replace(/[^a-zA-Z0-9_-]/g, "_"), ruleId, severity, category, title, message, remediation, file, line, language, snippet: snippet.trim().slice(0, 180) };
+function finding(ruleId: string, severity: Severity, category: Finding["category"], title: string, message: string, remediation: string, file: string, line: number, language: SupportedLanguage, snippet: string, related?: Finding["related"]): Finding {
+  return { id: `${ruleId}-${file}-${line}`.replace(/[^a-zA-Z0-9_-]/g, "_"), ruleId, severity, category, title, message, remediation, file, line, language, snippet: snippet.trim().slice(0, 180), ...(related ? { related: { ...related, snippet: related.snippet.trim().slice(0, 180) } } : {}) };
 }
 
 export function scanFiles(projectName: string, files: ScanInputFile[]): ScanReport {
@@ -57,7 +58,7 @@ export function scanFiles(projectName: string, files: ScanInputFile[]): ScanRepo
   const findings: Finding[] = [];
   const aiSignals: AiSignal[] = [];
   const supported = files.filter((file) => languageFor(file.path) !== "unknown");
-  const seenLines = new Map<string, { file: string; line: number; language: SupportedLanguage }>();
+  const seenLines = new Map<string, { file: string; line: number; language: SupportedLanguage; snippet: string }>();
   const duplicateCounts = new Map<string, number>();
   for (const file of supported) {
     const language = languageFor(file.path);
@@ -96,8 +97,8 @@ export function scanFiles(projectName: string, files: ScanInputFile[]): ScanRepo
         if (previous && previous.file !== file.path) {
           const pairKey = [previous.file, file.path].sort().join("::");
           const count = duplicateCounts.get(pairKey) ?? 0;
-          if (count < 5) { findings.push(finding("DUP001", "low", "duplication", "Repeated code signal", `This line closely matches ${previous.file}:${previous.line} in another file.`, "Extract shared logic into a reusable function or module.", file.path, line, language, raw)); duplicateCounts.set(pairKey, count + 1); }
-        } else seenLines.set(normalized, { file: file.path, line, language });
+          if (count < 5) { findings.push(finding("DUP001", "low", "duplication", "Repeated code signal", `This line closely matches ${previous.file}:${previous.line} in another file.`, "Extract shared logic into a reusable function or module.", file.path, line, language, raw, { file: previous.file, line: previous.line, snippet: previous.snippet })); duplicateCounts.set(pairKey, count + 1); }
+        } else seenLines.set(normalized, { file: file.path, line, language, snippet: raw });
       }
       const markupHeavy = /<\/?(svg|div|span|button|a)\b|\b(style|className|systemInstructionText)\s*=|^\s*`[^`]*<[^`]*`\s*;?$/i.test(text);
       if (text.length > 220 && !markupHeavy) findings.push(finding("QLT002", "info", "quality", "Long source line", "Very long executable lines reduce readability and can hide defects during review.", "Split the expression or apply the language formatter.", file.path, line, language, raw));

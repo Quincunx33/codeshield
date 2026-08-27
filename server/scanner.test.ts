@@ -88,6 +88,16 @@ describe("shared scanner contract", () => {
     expect(report.summary.high).toBeLessThanOrEqual(cipherchatExpected.maxHigh);
     expect(report.summary.medium).toBeLessThanOrEqual(cipherchatExpected.maxMedium);
   });
+  it("keeps exact source lines and both locations for duplicate findings", () => {
+    const repeated = "const responseMessage = createResponse(statusCode, userMessage, requestId, correlationId, retryAfter, securityContext, auditContext);";
+    const report = scanFiles("evidence", [{ path: "src/one.ts", content: repeated }, { path: "src/two.ts", content: repeated }]);
+    const duplicate = report.findings.find((item) => item.ruleId === "DUP001");
+    expect(duplicate?.snippet).toBe(repeated);
+    expect(duplicate?.line).toBe(1);
+    expect(duplicate?.related).toEqual({ file: "src/one.ts", line: 1, snippet: repeated });
+    const secret = scanFiles("source-line", [{ path: "src/config.py", content: 'API_KEY = "secret-value-123456"' }]).findings[0];
+    expect(secret?.snippet).toContain("API_KEY");
+  });
   it("flags randomness when the same file handles security material", () => {
     const report = scanFiles("security-context", [{ path: "src/auth.ts", content: "const token = process.env.TOKEN;\nconst nonce = Math.random();" }]);
     expect(report.findings.some((item) => item.title === "Non-cryptographic randomness" && item.line === 2)).toBe(true);

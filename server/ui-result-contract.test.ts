@@ -13,5 +13,9 @@ describe("dashboard result UX contract", () => {
     expect(source).toContain("flex flex-wrap items-center gap-3 text-[11px]");
     expect(source).toContain("max-w-2xl text-sm leading-6");
     expect(source).toContain("findingImpact(item)");
+    expect(source).toContain("Code at {item.file}:{item.line}");
+    expect(source).toContain("Source line unavailable in this report");
+    expect(source).toContain("item.related &&");
+    expect(source).toContain("Matching line in {item.related.file}");
   });
 });
