@@ -265,3 +265,11 @@
 - [x] Add clear anonymous versus authenticated states without misleading disabled controls
 - [x] Test the new flows, responsive layout, and error handling
 - [x] Save and publish the verified dashboard update
+
+# Sanitization and safe GitHub push
+
+- [x] Audit tracked files, working tree, and GitHub-facing history for secrets and sensitive artifacts
+- [x] Remove or replace sensitive content and unnecessary generated artifacts
+- [x] Run security scan, tests, typecheck, build, and whitespace checks
+- [ ] Push sanitized code to private GitHub main and verify remote contents
+- [ ] Close this checklist with no pending items
