@@ -180,3 +180,11 @@
 - [x] Monitor and record iterations, files, requests, failures, latency, deterministic mismatches, and false positives
 - [x] Analyze the measured log and add any needed regression coverage; no new regression required
 - [x] Run post-hour final verification and publish only after the timed run is complete
+
+# GitHub publication
+
+- [ ] Inspect GitHub identity and confirm the requested repository name is available
+- [ ] Create a polished README with live application link, usage, architecture, testing, and security notes
+- [ ] Add a branded visual asset to the README without storing credentials or secrets
+- [ ] Create the private GitHub repository, set description/topics, and push the tested code
+- [ ] Verify repository files, README rendering/link, metadata, and published remote state
