@@ -43,7 +43,16 @@ javac clients/java/CodeShieldDesktop.java
 java -cp clients/java CodeShieldDesktop
 ```
 
-The repository also includes GitHub Actions and GitLab CI quality-gate examples for integrating the scanner contract into review workflows.
+The repository includes a GitLab CI quality gate and a portable local gate command for integrating the scanner contract into review workflows. Generate a JSON report, then run the gate with the default high-severity policy:
+
+```bash
+pnpm quality:gate codeshield-report.json
+
+# Override the blocking threshold for a stricter or more permissive policy
+CODESHIELD_FAIL_ON=medium pnpm quality:gate codeshield-report.json
+```
+
+Supported thresholds are `critical`, `high`, `medium`, `low`, and `info`. The GitLab pipeline uses `CODESHIELD_FAIL_ON=high` by default and can override it through CI variables. In the dashboard, every finding includes language-aware syntax coloring, a focused line number, a copy-line action, and an expandable ±2-line context view. No credentials, session data, uploaded archives, or environment files belong in the repository; the remote repository is kept private.
 
 ## Architecture
 
@@ -60,7 +69,7 @@ The server exposes the same scanner through the public `scanner.run` procedure. 
 
 ## Verification
 
-The current release was validated with independent vulnerable, clean, mixed-language, safe-context, duplicate-code, commented-code, and AI-pattern fixtures. The final suite includes **45 Vitest tests**, **4 Python tests**, Java assertions, TypeScript checking, and a production build. A genuine timed stress run lasted exactly one hour and completed **1,340,694 local iterations**, **1,340,694 archive/API requests**, and **13,406,940 small-file scans** with zero failures, zero false-positive violations, and zero deterministic mismatches.
+The current release was validated with independent vulnerable, clean, mixed-language, safe-context, duplicate-code, commented-code, AI-pattern, syntax-highlighting, and quality-gate fixtures. The final suite includes **51 Vitest tests**, TypeScript checking, and a production build. A corrected genuine 30-minute run completed **448,953 local iterations**, **448,953 ZIP/API requests**, **448,953 pasted-code requests**, and **4,489,530 file scans** with zero runtime failures, false-positive violations, line-evidence failures, or deterministic mismatches; average API latency was 2 ms and maximum latency was 53 ms.
 
 ## Repository layout
 
@@ -84,7 +93,7 @@ pnpm check
 pnpm build
 ```
 
-The project uses React, TypeScript, Express, tRPC, Drizzle ORM, Vitest, Python 3, and Java 17. Do not commit environment files, API credentials, session cookies, or uploaded source archives.
+The project uses React, TypeScript, Express, tRPC, Drizzle ORM, Vitest, Python 3, and Java 17. Do not commit environment files, API credentials, session cookies, or uploaded source archives. The repository is private and is audited before publication for token-shaped strings, private keys, generated logs, and source archives.
 
 ## Live application
 

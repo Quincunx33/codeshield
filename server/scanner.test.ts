@@ -94,7 +94,7 @@ describe("shared scanner contract", () => {
     const duplicate = report.findings.find((item) => item.ruleId === "DUP001");
     expect(duplicate?.snippet).toBe(repeated);
     expect(duplicate?.line).toBe(1);
-    expect(duplicate?.related).toEqual({ file: "src/one.ts", line: 1, snippet: repeated });
+    expect(duplicate?.related).toMatchObject({ file: "src/one.ts", line: 1, snippet: repeated, context: { startLine: 1, lines: [repeated] } });
     const secret = scanFiles("source-line", [{ path: "src/config.py", content: 'API_KEY = "secret-value-123456"' }]).findings[0];
     expect(secret?.snippet).toContain("API_KEY");
   });

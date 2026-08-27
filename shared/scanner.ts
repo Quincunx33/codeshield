@@ -13,7 +13,8 @@ export type Finding = {
   line: number;
   language: SupportedLanguage;
   snippet?: string;
-  related?: { file: string; line: number; snippet: string };
+  context?: { startLine: number; lines: string[] };
+  related?: { file: string; line: number; snippet: string; context?: { startLine: number; lines: string[] } };
   explanation?: string;
 };
 
@@ -106,6 +107,17 @@ export function scanFiles(projectName: string, files: ScanInputFile[]): ScanRepo
     });
   }
   const order: Severity[] = ["critical", "high", "medium", "low", "info"];
+  const sourceByPath = new Map(supported.map((file) => [file.path, file.content.split(/\r?\n/)]));
+  const attachContext = (file: string, line: number) => {
+    const lines = sourceByPath.get(file);
+    if (!lines) return undefined;
+    const startLine = Math.max(1, line - 2);
+    return { startLine, lines: lines.slice(startLine - 1, Math.min(lines.length, line + 2)) };
+  };
+  findings.forEach((item) => {
+    item.context = attachContext(item.file, item.line);
+    if (item.related) item.related.context = attachContext(item.related.file, item.related.line);
+  });
   findings.sort((a, b) => order.indexOf(a.severity) - order.indexOf(b.severity) || a.file.localeCompare(b.file) || a.line - b.line);
   for (const file of supported) {
     const lines = file.content.split(/\r?\n/);
@@ -143,7 +155,7 @@ export function scanFiles(projectName: string, files: ScanInputFile[]): ScanRepo
 
 export function demoFiles(): ScanInputFile[] {
   return [
-    { path: "src/auth.py", content: 'API_KEY = "sk-live-example-secret"\ntry:\n    token = eval(user_input)\nexcept:\n    pass\n# TODO: replace with vault' },
+    { path: "src/auth.py", content: 'API_KEY = "example-secret-value-123456"\ntry:\n    token = eval(user_input)\nexcept:\n    pass\n# TODO: replace with vault' },
     { path: "src/legacy.cpp", content: 'void copy(char* input) {\n  char target[32];\n  strcpy(target, input);\n  system(input);\n}' },
     { path: "src/Token.java", content: 'String password = "demo-password-12345";\nRandom r = new Random();' },
   ];

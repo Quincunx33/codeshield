@@ -30,9 +30,17 @@ build/
 ehthumbs.db
 Thumbs.db
 
-# Logs
+# Logs and generated scan artifacts
 logs
 *.log
+codeshield-report.json
+30-minute-stress-*.log
+
+# Uploaded or source archives
+*.zip
+*.7z
+*.tar
+*.tar.gz
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

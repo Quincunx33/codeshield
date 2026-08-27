@@ -229,3 +229,11 @@
 - [x] Extend the timed harness with repeated pasted-code API scans and explicit snippet/duplicate-location assertions
 - [x] Rerun the complete 30-minute pass with local, pasted, ZIP, and line-evidence coverage
 - [x] Save a measured stress-test report with timestamps, counts, latency, and verdict before delivery
+
+# Finding UX and CI gate enhancement
+
+- [x] Add language-aware syntax highlighting to finding evidence blocks
+- [x] Add copy-line and surrounding-context actions with accessible feedback
+- [x] Add configurable CI quality-gate severity threshold and documentation
+- [x] Audit working tree, tracked files, and repository history for secrets or sensitive artifacts
+- [x] Run tests/build/security checks, remove any sensitive content found, and push only safe code to the private repository
