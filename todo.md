@@ -243,3 +243,11 @@
 - [x] Add a GitHub Actions workflow that runs CodeShield tests, typecheck, build, and configurable quality gate
 - [x] Validate workflow YAML, permissions, secret handling, and repository-sensitive content
 - [x] Push the workflow to the private GitHub repository and verify remote visibility and workflow file
+
+# GitHub Actions failure follow-up
+
+- [ ] Inspect the failed workflow run and current GitHub connector/authentication state
+- [ ] Determine whether the failure is caused by the revoked PAT or by workflow configuration
+- [ ] Apply the minimal safe workflow correction without embedding credentials
+- [ ] Re-run local checks and verify a successful GitHub Actions run
+- [ ] Document what the workflow does and its final status
