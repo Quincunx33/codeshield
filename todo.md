@@ -246,13 +246,13 @@
 
 # GitHub Actions failure follow-up
 
-- [ ] Inspect the failed workflow run and current GitHub connector/authentication state
-- [ ] Determine whether the failure is caused by the revoked PAT or by workflow configuration
-- [ ] Apply the minimal safe workflow correction without embedding credentials
-- [ ] Re-run local checks and verify a successful GitHub Actions run
-- [ ] Document what the workflow does and its final status
+- [x] Inspect the failed workflow run and current GitHub connector/authentication state
+- [x] Determine whether the failure is caused by the revoked PAT or by workflow configuration
+- [x] Apply the minimal safe workflow correction without embedding credentials
+- [x] Re-run local checks and verify a successful GitHub Actions run
+- [x] Document what the workflow does and its final status
 
 # GitHub runner API restriction
 
-- [ ] Replace workflow dependence on the live dashboard API with an offline local scanner invocation so GitHub runners do not require external API access
-- [ ] Re-run and verify the workflow after the local-engine correction
+- [x] Replace workflow dependence on the live dashboard API with an offline local scanner invocation so GitHub runners do not require external API access
+- [x] Re-run and verify the workflow after the local-engine correction
