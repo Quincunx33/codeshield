@@ -1,12 +1,12 @@
 <div align="center">
 
-![CodeShield Mix](https://codeshldmix-6okjdbit.manus.space/manus-storage/codeshield-readme-hero_a7957a3e.png)
+![CodeShield](https://codeshldmix-6okjdbit.manus.space/manus-storage/codeshield-readme-hero_a7957a3e.png)
 
-# CodeShield Mix
+# CodeShield
 
 **Unified source-code security and quality scanning for real projects.**
 
-[![Live dashboard](https://img.shields.io/badge/Live%20dashboard-Open%20CodeShield%20Mix-16d9e8?style=for-the-badge)](https://codeshldmix-6okjdbit.manus.space/)
+[![Live dashboard](https://img.shields.io/badge/Live%20dashboard-Open%20CodeShield-16d9e8?style=for-the-badge)](https://codeshldmix-6okjdbit.manus.space/)
 [![Schema](https://img.shields.io/badge/report%20schema-1.0-5eead4?style=flat-square)](https://codeshldmix-6okjdbit.manus.space/)
 [![Languages](https://img.shields.io/badge/languages-C%20%7C%20C%2B%2B%20%7C%20Python%20%7C%20Java%20%7C%20Kotlin%20%7C%20JS%20%7C%20TS-172554?style=flat-square)](https://codeshldmix-6okjdbit.manus.space/)
 
@@ -16,11 +16,11 @@
 
 ## What it does
 
-CodeShield Mix is a deterministic, evidence-first scanner for pasted source code and project ZIP archives. It reports security risk, maintainability issues, repeated code, and AI-generated-code likelihood as separate signals so a quality score is not confused with a security verdict.
+CodeShield is a deterministic, evidence-first scanner for pasted source code and project ZIP archives. It reports security risk, maintainability issues, repeated code, and AI-generated-code likelihood as separate signals so a quality score is not confused with a security verdict.
 
 The scanner is designed for practical review: every finding carries a file path, line location, severity, rule identifier, evidence snippet, explanation, and remediation guidance. Anonymous users can run scans; sign-in is only needed for saved history, team workspaces, and recurring repository scans.
 
-> **Important:** AI-generated-code likelihood is pattern-based evidence, not proof of authorship. CodeShield Mix is a review aid, not a replacement for human review, dependency auditing, secure build pipelines, or runtime testing.
+> **Important:** AI-generated-code likelihood is pattern-based evidence, not proof of authorship. CodeShield is a review aid, not a replacement for human review, dependency auditing, secure build pipelines, or runtime testing.
 
 ## Report model
 
