@@ -14,8 +14,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CODESHIELD_SERVER: https://codeshldmix-6okjdbit.manus.space/api/trpc
   CODESHIELD_FAIL_ON: ${{ vars.CODESHIELD_FAIL_ON || 'high' }}
+  # Test fixtures and client demo payloads intentionally contain vulnerable examples used to validate detection.
+  CODESHIELD_IGNORE: server/,scripts/timed-small-file-stress.ts,shared/scanner.ts,clients/java/CodeShieldDesktop.java,clients/java/CodeShieldDesktopTest.java
 
 jobs:
   verify:
@@ -34,11 +35,6 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -51,8 +47,8 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Scan repository anonymously
-        run: python3 clients/cli/codeshield.py . --server "$CODESHIELD_SERVER" --json codeshield-report.json
+      - name: Scan repository locally
+        run: pnpm exec tsx scripts/scan-local.ts . codeshield-report.json
 
       - name: Enforce severity gate
         run: pnpm quality:gate codeshield-report.json

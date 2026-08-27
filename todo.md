@@ -251,3 +251,8 @@
 - [ ] Apply the minimal safe workflow correction without embedding credentials
 - [ ] Re-run local checks and verify a successful GitHub Actions run
 - [ ] Document what the workflow does and its final status
+
+# GitHub runner API restriction
+
+- [ ] Replace workflow dependence on the live dashboard API with an offline local scanner invocation so GitHub runners do not require external API access
+- [ ] Re-run and verify the workflow after the local-engine correction
