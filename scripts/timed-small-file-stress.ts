@@ -7,9 +7,11 @@ const startedAt = new Date();
 const started = Date.now();
 let localIterations = 0;
 let apiRequests = 0;
+let pastedApiRequests = 0;
 let filesScanned = 0;
 let failures = 0;
 let falsePositiveViolations = 0;
+let lineEvidenceFailures = 0;
 let deterministicMismatches = 0;
 let totalApiLatency = 0;
 let maxApiLatency = 0;
@@ -52,16 +54,32 @@ async function apiCheck() {
     if (!response.ok || result.error || report.filesScanned !== files.length || !report.qualityScore) throw new Error(`invalid API report/status ${response.status}`);
     if (!report.findings.some((item: any) => item.title === "Shell command execution")) failures++;
     if (report.findings.some((item: any) => item.file === "docs/comment.py" && item.category === "security")) falsePositiveViolations++;
+    if (report.findings.some((item: any) => typeof item.snippet !== "string" || item.snippet.length === 0 || (item.ruleId === "DUP001" && (!item.related || item.related.snippet !== item.snippet)))) lineEvidenceFailures++;
+  } catch (error) { failures++; lastError = error instanceof Error ? error.message : String(error); }
+}
+
+async function pastedApiCheck() {
+  const pastedSource = 'API_KEY = "stress-secret-value-123456"\nvalue = eval(user_input)';
+  const body = { json: { projectName: "timed-pasted-stress", files: [{ path: "src/input.py", content: pastedSource }] } };
+  try {
+    const response = await fetch(`${apiUrl}/scanner.run`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    const result = await response.json() as any;
+    pastedApiRequests++;
+    const report = result.result?.data?.json ?? result;
+    const secret = report.findings?.find((item: any) => item.ruleId === "SEC001");
+    const dynamic = report.findings?.find((item: any) => item.title === "Dynamic code execution");
+    if (!response.ok || result.error || report.filesScanned !== 1 || secret?.line !== 1 || secret?.snippet !== 'API_KEY = "stress-secret-value-123456"' || dynamic?.line !== 2 || dynamic?.snippet !== "value = eval(user_input)") lineEvidenceFailures++;
   } catch (error) { failures++; lastError = error instanceof Error ? error.message : String(error); }
 }
 
 while (Date.now() - started < durationMs) {
   localCheck();
   await apiCheck();
-  if ((localIterations + apiRequests) % 100 === 0) {
-    console.log(JSON.stringify({ at: new Date().toISOString(), localIterations, apiRequests, filesScanned, failures, falsePositiveViolations, deterministicMismatches, avgApiLatencyMs: apiRequests ? Math.round(totalApiLatency / apiRequests) : 0, maxApiLatencyMs: maxApiLatency }));
+  await pastedApiCheck();
+  if ((localIterations + apiRequests + pastedApiRequests) % 100 === 0) {
+    console.log(JSON.stringify({ at: new Date().toISOString(), localIterations, apiRequests, pastedApiRequests, filesScanned, failures, falsePositiveViolations, lineEvidenceFailures, deterministicMismatches, avgApiLatencyMs: apiRequests ? Math.round(totalApiLatency / apiRequests) : 0, maxApiLatencyMs: maxApiLatency }));
   }
 }
 
-console.log(JSON.stringify({ startedAt: startedAt.toISOString(), endedAt: new Date().toISOString(), elapsedMs: Date.now() - started, durationTargetMs: durationMs, localIterations, apiRequests, filesScanned, failures, falsePositiveViolations, deterministicMismatches, avgApiLatencyMs: apiRequests ? Math.round(totalApiLatency / apiRequests) : 0, maxApiLatencyMs: maxApiLatency, lastError }, null, 2));
-if (failures || falsePositiveViolations || deterministicMismatches) process.exitCode = 1;
+console.log(JSON.stringify({ startedAt: startedAt.toISOString(), endedAt: new Date().toISOString(), elapsedMs: Date.now() - started, durationTargetMs: durationMs, localIterations, apiRequests, pastedApiRequests, filesScanned, failures, falsePositiveViolations, lineEvidenceFailures, deterministicMismatches, avgApiLatencyMs: apiRequests ? Math.round(totalApiLatency / apiRequests) : 0, maxApiLatencyMs: maxApiLatency, lastError }, null, 2));
+if (failures || falsePositiveViolations || lineEvidenceFailures || deterministicMismatches) process.exitCode = 1;

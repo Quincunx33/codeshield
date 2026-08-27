@@ -215,3 +215,17 @@
 - [x] Show line-numbered code context visibly in each dashboard finding card
 - [x] Add regression tests for snippets, missing-source handling, and duplicate locations
 - [x] Verify real ZIP and pasted scans, then publish the evidence update
+
+# 30-minute stress verification
+
+- [x] Prepare a reproducible 30-minute local/API stress harness with timestamps and metrics
+- [x] Run continuous multi-language, pasted-code, ZIP, and line-evidence scenarios for 30 minutes
+- [x] Analyze crashes, latency, determinism, true positives, and false-positive boundaries
+- [x] Apply and verify fixes if the run reveals a defect
+- [x] Record and deliver the measured 30-minute stress-test report
+
+# 30-minute stress coverage correction
+
+- [x] Extend the timed harness with repeated pasted-code API scans and explicit snippet/duplicate-location assertions
+- [x] Rerun the complete 30-minute pass with local, pasted, ZIP, and line-evidence coverage
+- [x] Save a measured stress-test report with timestamps, counts, latency, and verdict before delivery
