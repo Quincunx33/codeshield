@@ -195,3 +195,15 @@
 - [x] Update README links, title, description, and topics for the renamed repository
 - [x] Rename the GitHub repository to `codeshield` and push all non-workflow files
 - [x] Verify the renamed remote, metadata, README, and workflow exclusion
+
+# Human-readable scan results
+
+- [x] Audit current result hierarchy and define understandable outcome states
+- [x] Add a plain-language scan verdict with urgency and immediate next action
+- [x] Explain quality score and AI likelihood in user-facing language
+- [x] Rewrite finding cards around problem, impact, location, and fix
+- [x] Keep technical evidence available behind clear expandable details
+- [x] Add tests and verify the post-scan result flow on desktop and mobile
+- [x] Move plain-language result regression into the active Vitest test glob and rerun typecheck/build
+- [x] Document completed-scan browser smoke evidence for verdict, finding cards, technical disclosure, and responsive layout
+- [x] Add a source-level responsive contract assertion for the result panel classes
