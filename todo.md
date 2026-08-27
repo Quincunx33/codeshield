@@ -271,5 +271,5 @@
 - [x] Audit tracked files, working tree, and GitHub-facing history for secrets and sensitive artifacts
 - [x] Remove or replace sensitive content and unnecessary generated artifacts
 - [x] Run security scan, tests, typecheck, build, and whitespace checks
-- [ ] Push sanitized code to private GitHub main and verify remote contents
-- [ ] Close this checklist with no pending items
+- [x] Push sanitized code to private GitHub main and verify remote contents
+- [x] Close this checklist with no pending items
