@@ -8,25 +8,98 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Activity, AlertTriangle, ArrowUpRight, CheckCircle2, Clock3, Code2, Download, FileCode2, LoaderCircle, LockKeyhole, Play, ScanLine, ShieldCheck, Sparkles, TerminalSquare } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowUpRight,
+  CheckCircle2,
+  Clock3,
+  Code2,
+  Download,
+  FileCode2,
+  LoaderCircle,
+  LockKeyhole,
+  Play,
+  ScanLine,
+  ShieldCheck,
+  Sparkles,
+  TerminalSquare,
+} from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { deriveProjectName, type Finding, type ScanReport } from "../../../shared/scanner";
-import { serializeHtmlReport, serializeJsonReport } from "../../../shared/report";
+import {
+  deriveProjectName,
+  type Finding,
+  type ScanReport,
+} from "../../../shared/scanner";
+import {
+  serializeHtmlReport,
+  serializeJsonReport,
+} from "../../../shared/report";
 import { scanStages } from "@/lib/scanProgress";
-import { findingImpact, plainFindingTitle, reportOutcome } from "@/lib/resultCopy";
+import {
+  findingImpact,
+  plainFindingTitle,
+  reportOutcome,
+} from "@/lib/resultCopy";
 import { CodeEvidence } from "@/components/CodeEvidence";
 
-const severityMeta = { critical: { label: "Critical", color: "text-red-300", bg: "bg-red-500/15 border-red-400/20" }, high: { label: "High", color: "text-orange-300", bg: "bg-orange-500/15 border-orange-400/20" }, medium: { label: "Medium", color: "text-amber-300", bg: "bg-amber-500/15 border-amber-400/20" }, low: { label: "Low", color: "text-sky-300", bg: "bg-sky-500/15 border-sky-400/20" }, info: { label: "Info", color: "text-slate-300", bg: "bg-slate-500/15 border-slate-400/20" } } as const;
+const severityMeta = {
+  critical: {
+    label: "Critical",
+    color: "text-red-300",
+    bg: "bg-red-500/15 border-red-400/20",
+  },
+  high: {
+    label: "High",
+    color: "text-orange-300",
+    bg: "bg-orange-500/15 border-orange-400/20",
+  },
+  medium: {
+    label: "Medium",
+    color: "text-amber-300",
+    bg: "bg-amber-500/15 border-amber-400/20",
+  },
+  low: {
+    label: "Low",
+    color: "text-sky-300",
+    bg: "bg-sky-500/15 border-sky-400/20",
+  },
+  info: {
+    label: "Info",
+    color: "text-slate-300",
+    bg: "bg-slate-500/15 border-slate-400/20",
+  },
+} as const;
 
-function download(name: string, content: string, type: string) { const blob = new Blob([content], { type }); const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; anchor.click(); URL.revokeObjectURL(url); }
-function severityBadge(severity: Finding["severity"]) { const meta = severityMeta[severity]; return <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${meta.bg} ${meta.color}`}>{meta.label}</span>; }
+function download(name: string, content: string, type: string) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+function severityBadge(severity: Finding["severity"]) {
+  const meta = severityMeta[severity];
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${meta.bg} ${meta.color}`}
+    >
+      {meta.label}
+    </span>
+  );
+}
 
 export default function Home() {
   const { user, isAuthenticated, logout } = useAuth();
   const [projectName, setProjectName] = useState("");
   const [path, setPath] = useState("");
   const [code, setCode] = useState("");
-  const [archive, setArchive] = useState<{ name: string; base64: string } | null>(null);
+  const [archive, setArchive] = useState<{
+    name: string;
+    base64: string;
+  } | null>(null);
   const [repositoryUrl, setRepositoryUrl] = useState("");
   const [workspaceName, setWorkspaceName] = useState("Release review team");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -34,38 +107,1026 @@ export default function Home() {
   const [report, setReport] = useState<ScanReport | null>(null);
   const [selectedScan, setSelectedScan] = useState<number | null>(null);
   const [filter, setFilter] = useState<"all" | Finding["severity"]>("all");
-  const [ai, setAi] = useState<Record<string, { riskExplanation: string; remediationSuggestion: string }>>({});
+  const [ai, setAi] = useState<
+    Record<string, { riskExplanation: string; remediationSuggestion: string }>
+  >({});
   const [scanStage, setScanStage] = useState(0);
-  const runScan = trpc.scanner.run.useMutation({ onSuccess: (data) => { setScanStage(3); setReport(data); toast.success(`Scan complete — ${data.findings.length} findings ranked`); }, onError: (error) => { setScanStage(0); toast.error(error.message); } });
+  const runScan = trpc.scanner.run.useMutation({
+    onSuccess: data => {
+      setScanStage(3);
+      setReport(data);
+      toast.success(`Scan complete — ${data.findings.length} findings ranked`);
+    },
+    onError: error => {
+      setScanStage(0);
+      toast.error(error.message);
+    },
+  });
   useEffect(() => {
     if (!runScan.isPending) return;
     setScanStage(0);
-    const stageTimer = window.setInterval(() => setScanStage((current) => Math.min(current + 1, scanStages.length - 1)), 850);
-    return () => { window.clearInterval(stageTimer); };
+    const stageTimer = window.setInterval(
+      () =>
+        setScanStage(current => Math.min(current + 1, scanStages.length - 1)),
+      850
+    );
+    return () => {
+      window.clearInterval(stageTimer);
+    };
   }, [runScan.isPending]);
-  const history = trpc.scanner.history.useQuery(undefined, { enabled: isAuthenticated });
-  const storedDetail = trpc.scanner.detail.useQuery({ scanId: selectedScan ?? 0 }, { enabled: isAuthenticated && selectedScan !== null });
-  const workspaces = trpc.workspace.list.useQuery(undefined, { enabled: isAuthenticated });
-  const createWorkspace = trpc.workspace.create.useMutation({ onSuccess: () => { workspaces.refetch(); toast.success("Workspace created"); } });
-  const inviteMember = trpc.workspace.invite.useMutation({ onSuccess: () => toast.success("Member invited") });
-  const schedules = trpc.schedules.list.useQuery(undefined, { enabled: isAuthenticated });
-  const createSchedule = trpc.schedules.create.useMutation({ onSuccess: () => { schedules.refetch(); toast.success("Recurring scan scheduled"); }, onError: (error) => toast.error(error.message) });
-  const setScheduleEnabled = trpc.schedules.setEnabled.useMutation({ onSuccess: () => { schedules.refetch(); toast.success("Schedule updated"); }, onError: (error) => toast.error(error.message) });
-  const explain = trpc.scanner.explain.useMutation({ onSuccess: (data, variables) => setAi((current) => ({ ...current, [variables.title + variables.message]: data })) });
+  const history = trpc.scanner.history.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const storedDetail = trpc.scanner.detail.useQuery(
+    { scanId: selectedScan ?? 0 },
+    { enabled: isAuthenticated && selectedScan !== null }
+  );
+  const workspaces = trpc.workspace.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const createWorkspace = trpc.workspace.create.useMutation({
+    onSuccess: () => {
+      workspaces.refetch();
+      toast.success("Workspace created");
+    },
+  });
+  const inviteMember = trpc.workspace.invite.useMutation({
+    onSuccess: () => toast.success("Member invited"),
+  });
+  const schedules = trpc.schedules.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const createSchedule = trpc.schedules.create.useMutation({
+    onSuccess: () => {
+      schedules.refetch();
+      toast.success("Recurring scan scheduled");
+    },
+    onError: error => toast.error(error.message),
+  });
+  const setScheduleEnabled = trpc.schedules.setEnabled.useMutation({
+    onSuccess: () => {
+      schedules.refetch();
+      toast.success("Schedule updated");
+    },
+    onError: error => toast.error(error.message),
+  });
+  const repositories = trpc.repositories.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const saveRepositoryMutation = trpc.repositories.save.useMutation({
+    onSuccess: () => {
+      repositories.refetch();
+      toast.success("Repository saved");
+    },
+    onError: error => toast.error(error.message),
+  });
+  const checkRepositoryMutation = trpc.repositories.check.useMutation({
+    onSuccess: data => {
+      setReport(data);
+      toast.success(
+        `Repository checked — ${data.findings.length} findings ranked`
+      );
+    },
+    onError: error => toast.error(error.message),
+  });
+  const explain = trpc.scanner.explain.useMutation({
+    onSuccess: (data, variables) =>
+      setAi(current => ({
+        ...current,
+        [variables.title + variables.message]: data,
+      })),
+  });
   const showReport = report;
-  const filtered = useMemo(() => showReport?.findings.filter((item) => filter === "all" || item.severity === filter) ?? [], [showReport, filter]);
-  const start = () => { const name = deriveProjectName(projectName, archive?.name); if (name === "Uploaded archive" && !archive) { toast.error("Enter a project name before scanning pasted code"); return; } setReport(null); runScan.mutate(archive ? { projectName: name, files: [], archiveBase64: archive.base64, archiveName: archive.name } : { projectName: name, files: [{ path, content: code }] }); };
-  const chooseArchive = async (file?: File) => { if (!file) return; if (file.size > 6_000_000) { toast.error("Archive exceeds the 6 MB temporary limit"); return; } try { const bytes = new Uint8Array(await file.arrayBuffer()); let binary = ""; const chunk = 0x8000; for (let offset = 0; offset < bytes.length; offset += chunk) binary += String.fromCharCode(...Array.from(bytes.subarray(offset, Math.min(offset + chunk, bytes.length)))); const base64 = btoa(binary); const derivedName = deriveProjectName(projectName, file.name); setProjectName((current) => current.trim() || derivedName); setArchive({ name: file.name, base64 }); setReport(null); toast.success(`${file.name} uploaded; scan started`); runScan.mutate({ projectName: derivedName, files: [], archiveBase64: base64, archiveName: file.name }); } catch { toast.error("Could not read this ZIP archive"); } };
-  const exportReport = (type: "json" | "html") => { if (!showReport) return; if (type === "json") download(`${showReport.projectName.replace(/\s+/g, "-")}.json`, serializeJsonReport(showReport), "application/json"); else download(`${showReport.projectName.replace(/\s+/g, "-")}.html`, serializeHtmlReport(showReport), "text/html"); };
-  return <div className="min-h-screen bg-[#07111f] text-slate-100">
-    <header className="border-b border-white/10 bg-[#07111f]/90 backdrop-blur-xl"><div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-4"><div className="flex items-center gap-3"><div className="grid h-9 w-9 place-items-center rounded-xl bg-cyan-300 text-[#07111f]"><ShieldCheck size={20}/></div><div><p className="font-semibold tracking-tight">CodeShield <span className="text-cyan-300">Mix</span></p><p className="text-[10px] uppercase tracking-[0.28em] text-slate-500">Source assurance platform</p></div></div><div className="flex items-center gap-3 text-xs text-slate-400"><span className="hidden items-center gap-2 sm:flex"><span className="h-2 w-2 rounded-full bg-emerald-400"/> Engine online</span>{user ? <><span className="rounded-full border border-white/10 px-3 py-1.5">{user.name || user.email}</span><Button variant="ghost" size="sm" onClick={() => logout()}>Sign out</Button></> : <Button size="sm" onClick={() => startLogin()}>Sign in to save scans</Button>}</div></div></header>
-    <main className="mx-auto max-w-[1440px] px-6 py-8"><div className="mb-8 grid gap-6 lg:grid-cols-[1.1fr_.9fr] lg:items-end"><div><div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/5 px-3 py-1 text-xs text-cyan-200"><Sparkles size={13}/> Deterministic rules, augmented intelligence</div><h1 className="max-w-3xl text-4xl font-semibold leading-[1.08] tracking-[-0.04em] sm:text-6xl">See the risk hiding in every line of code.</h1><p className="mt-5 max-w-2xl text-base leading-7 text-slate-400">Find exposed credentials, dangerous APIs, quality regressions and repeated code before they reach production.</p></div><div className="grid grid-cols-3 gap-3"><div className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><p className="text-2xl font-semibold">Line-level</p><p className="mt-1 text-xs text-slate-500">Evidence</p></div><div className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><p className="text-2xl font-semibold">1.0</p><p className="mt-1 text-xs text-slate-500">Report schema</p></div><div className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><p className="text-2xl font-semibold">API</p><p className="mt-1 text-xs text-slate-500">Shared contract</p></div></div></div>
-      <div className="grid gap-6 xl:grid-cols-[420px_1fr]"><Card className="border-white/10 bg-white/[.035] shadow-2xl shadow-cyan-950/10"><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Play size={16} className="text-cyan-300"/> Launch a scan</CardTitle><p className="text-sm text-slate-500">Paste a source file or upload a project archive to get actionable findings.</p></CardHeader><CardContent className="space-y-4"><Input value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="Project name" className="border-white/10 bg-black/10"/><div className="grid grid-cols-[1fr_100px] gap-2"><Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="src/main.py" className="border-white/10 bg-black/10"/><div className="flex items-center justify-center rounded-md border border-white/10 text-xs text-cyan-200">{path.split(".").pop()?.toUpperCase()}</div></div><Textarea value={code} onChange={(e) => setCode(e.target.value)} className="min-h-[280px] resize-none border-white/10 bg-[#050b14] font-mono text-xs leading-6 text-slate-300"/><label className="flex cursor-pointer items-center justify-between rounded-md border border-dashed border-cyan-300/20 bg-cyan-300/5 px-3 py-2 text-xs text-cyan-100"><span>{archive ? `Archive ready · ${archive.name}` : "Or upload a ZIP source archive"}</span><input type="file" accept=".zip,application/zip" className="hidden" onChange={(e) => chooseArchive(e.target.files?.[0])}/><span className="rounded bg-cyan-300/10 px-2 py-1">Browse</span></label><Button className="w-full bg-cyan-300 text-[#06111d] hover:bg-cyan-200" onClick={start} disabled={runScan.isPending}>{runScan.isPending ? <><LoaderCircle size={15} className="animate-spin"/> Scanning…</> : <><Play size={14}/> Run scan</>}</Button>{runScan.isPending && <div className="scan-progress-panel" role="status" aria-live="polite"><div className="flex items-center gap-2"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-cyan-300/10 text-cyan-200"><ScanLine size={15} className="scan-pulse"/></span><div className="min-w-0"><p className="truncate text-xs font-semibold text-cyan-100">{scanStages[scanStage]}</p><p className="mt-0.5 text-[11px] text-slate-500">Live activity · the engine is still working</p></div></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-900/90" role="progressbar" aria-label="Scan in progress" aria-valuetext="Code analysis is in progress"><div className="scan-progress-indeterminate h-full rounded-full"/></div><div className="mt-3 grid grid-cols-4 gap-1">{scanStages.map((stage, index) => <div key={stage} className={`flex items-center gap-1 text-[10px] ${index <= scanStage ? "text-cyan-200" : "text-slate-600"}`}><span className={`h-1.5 w-1.5 rounded-full ${index <= scanStage ? "bg-cyan-300" : "bg-slate-700"}`}/><span className="hidden sm:inline">{stage.replace("Running deterministic rules", "Rules").replace("Finalizing report", "Report")}</span></div>)}</div></div>}<div className="flex items-center justify-center gap-2 text-[11px] text-slate-500"><LockKeyhole size={12}/> Anyone can scan; sign in only to save history, teams, or schedules</div></CardContent></Card>
-        <section className="min-w-0">{showReport && (() => { const outcome = reportOutcome(showReport); const tone = outcome.tone === "urgent" ? "border-red-300/25 bg-red-300/10 text-red-50" : outcome.tone === "safe" ? "border-emerald-300/25 bg-emerald-300/10 text-emerald-50" : "border-amber-300/25 bg-amber-300/10 text-amber-50"; const OutcomeIcon = outcome.tone === "safe" ? CheckCircle2 : AlertTriangle; return <div className={`mb-5 rounded-2xl border p-5 ${tone}`}><div className="flex flex-wrap items-start justify-between gap-4"><div className="flex gap-3"><div className="mt-0.5"><OutcomeIcon size={22}/></div><div><p className="text-xs font-semibold uppercase tracking-[.18em] opacity-70">Scan result</p><h3 className="mt-1 text-xl font-semibold">{outcome.title}</h3><p className="mt-2 max-w-2xl text-sm leading-6 opacity-80">{outcome.body}</p></div></div><span className="rounded-full border border-current/20 px-3 py-1.5 text-xs font-semibold">{outcome.action}</span></div></div>; })()}<div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-slate-500">What to do next</p><h2 className="mt-1 text-2xl font-semibold">{showReport?.projectName || "Awaiting your first scan"}</h2></div>{showReport && <div className="flex gap-2"><Button variant="outline" size="sm" className="border-white/10 bg-transparent" onClick={() => exportReport("json")}><Download size={14}/> JSON</Button><Button variant="outline" size="sm" className="border-white/10 bg-transparent" onClick={() => exportReport("html")}><Download size={14}/> HTML</Button></div>}</div>{showReport ? <><div className="mb-5 rounded-2xl border border-emerald-300/15 bg-emerald-300/5 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex items-center gap-2 text-sm font-semibold text-emerald-100"><Activity size={15}/> Code quality score</div><p className="mt-1 text-xs leading-5 text-slate-400">Maintainability, duplication and hygiene only. Security risk is shown separately below.</p></div><div className="text-right"><p className="font-mono text-3xl font-semibold text-emerald-200">{showReport.qualityScore.score.toFixed(1)}<span className="text-base text-emerald-200/60">/10</span></p><p className="text-[11px] uppercase tracking-wider text-emerald-200/70">{showReport.qualityScore.label}</p></div></div><div className="mt-3 grid gap-2 text-[11px] text-slate-400 sm:grid-cols-3"><span>Maintainability −{showReport.qualityScore.breakdown.maintainability.toFixed(2)}</span><span>Duplication −{showReport.qualityScore.breakdown.duplication.toFixed(2)}</span><span>Hygiene −{showReport.qualityScore.breakdown.hygiene.toFixed(2)}</span></div></div><div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">{Object.entries(showReport.summary).map(([key, value]) => <button key={key} onClick={() => setFilter(key as typeof filter)} className={`rounded-xl border p-3 text-left transition ${filter === key ? "border-cyan-300/50 bg-cyan-300/10" : "border-white/10 bg-white/[.035] hover:border-white/20"}`}><p className={`text-2xl font-semibold ${severityMeta[key as Finding["severity"]].color}`}>{value}</p><p className="mt-1 text-[11px] uppercase tracking-wider text-slate-500">{key}</p></button>)}</div>{showReport.aiSignals.length > 0 && <div className="mb-5 rounded-xl border border-violet-300/15 bg-violet-300/5 p-4"><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold text-violet-100">AI-generated code likelihood</p><p className="mt-1 text-xs leading-5 text-slate-400">Pattern-based likelihood only—not proof of authorship or a security verdict.</p></div><span className="rounded-full bg-violet-300/10 px-2 py-1 text-xs text-violet-200">{showReport.aiSignals.length} file(s)</span></div><div className="mt-3 space-y-2">{showReport.aiSignals.map((signal) => <div key={signal.file} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/5 bg-black/10 px-3 py-2 text-xs"><span className="font-mono text-slate-300">{signal.file}</span><span className="text-violet-200">{signal.score}% likelihood · {signal.confidence} confidence</span><details className="w-full text-xs text-slate-400"><summary className="cursor-pointer text-slate-300">{signal.file}:{signal.lineStart}-{signal.lineEnd} · why this signal?</summary><div className="mt-2 space-y-2"><pre className="overflow-x-auto rounded bg-black/20 p-2 font-mono text-[11px] leading-5 text-slate-400">{signal.evidence}</pre><p><strong className="text-slate-300">Evidence:</strong> {signal.reasons.join(" · ")}</p><p><strong className="text-slate-300">Score breakdown:</strong> comments {signal.scoreBreakdown.commentDensity}, phrasing {signal.scoreBreakdown.phrasing}, markers {signal.scoreBreakdown.unresolvedMarkers}, formatting {signal.scoreBreakdown.formatting}, breadth {signal.scoreBreakdown.breadth}</p><p><strong className="text-slate-300">Verify:</strong> {signal.verification}</p><p><strong className="text-slate-300">Next step:</strong> {signal.remediation}</p></div></details></div>)}</div></div>}<div className="mb-4 flex items-center justify-between"><div className="flex items-center gap-2 text-sm text-slate-400"><AlertTriangle size={15} className="text-amber-300"/> {filtered.length} items to review <button className="text-cyan-300 hover:underline" onClick={() => setFilter("all")}>Reset</button></div><span className="text-xs text-slate-500">{showReport.filesScanned} supported files · {showReport.durationMs}ms</span></div><div className="space-y-3">{filtered.length ? filtered.map((item) => { const key = item.title + item.message; return <Card key={item.id} className="border-white/10 bg-white/[.035]"><CardContent className="p-4"><div className="flex items-start gap-3"><div className="mt-0.5 rounded-lg bg-white/5 p-2 text-slate-400"><FileCode2 size={16}/></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2">{severityBadge(item.severity)}<span className="text-sm font-semibold">{plainFindingTitle(item)}</span></div><p className="mt-2 text-sm leading-6 text-slate-300">{findingImpact(item)}</p><div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-slate-500"><span className="flex items-center gap-1 font-mono text-cyan-200/70"><ArrowUpRight size={11}/>{item.file}:{item.line}</span><span>Rule: {item.ruleId}</span></div><div className="mt-4 rounded-lg border border-white/5 bg-black/20 p-3 text-xs leading-5 text-slate-400"><span className="font-semibold text-slate-300">How to fix:</span> {item.remediation}</div><CodeEvidence file={item.file} line={item.line} language={item.language} snippet={item.snippet} context={item.context} related={item.related} /><details className="mt-3 text-xs text-slate-500"><summary className="cursor-pointer hover:text-slate-400">Technical evidence</summary><div className="mt-2 space-y-3 border-t border-white/5 pt-3"><p>{item.message}</p>{item.snippet && <pre className="overflow-x-auto rounded bg-black/30 p-2 font-mono text-[10px] leading-5 text-slate-400">{item.snippet}</pre>}</div></details>{ai[key] && <div className="mt-3 rounded-lg border border-cyan-300/15 bg-cyan-300/5 p-3 text-xs leading-5 text-cyan-50"><p><strong>AI risk context:</strong> {ai[key].riskExplanation}</p><p className="mt-1"><strong>Suggested next step:</strong> {ai[key].remediationSuggestion}</p></div>}<Button variant="ghost" size="sm" className="mt-2 h-7 px-0 text-xs text-cyan-300 hover:bg-transparent hover:text-cyan-200" onClick={() => explain.mutate({ title: item.title, message: item.message, remediation: item.remediation, language: item.language, snippet: item.snippet })}><Sparkles size={13}/> {explain.isPending ? "Explaining…" : "Add AI context"}</Button></div></div></CardContent></Card> }) : <div className="rounded-2xl border border-dashed border-white/10 p-12 text-center text-slate-500"><CheckCircle2 className="mx-auto mb-3 text-emerald-300"/>No findings match this filter.</div>}</div></> : <div className="grid min-h-[520px] place-items-center rounded-2xl border border-dashed border-white/10 bg-white/[.02] text-center"><div><Code2 className="mx-auto mb-4 text-cyan-300" size={32}/><p className="font-medium">Paste code and launch the first scan</p><p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">The dashboard will rank every finding, link it to an exact line, and create a portable JSON/HTML report.</p></div></div>}</section></div>
-      <Card className="mt-8 border-white/10 bg-white/[.035]"><CardHeader><CardTitle className="flex items-center gap-2 text-base"><ArrowUpRight size={16} className="text-cyan-300"/> Connect a repository</CardTitle><p className="text-sm text-slate-500">Point your repository workflow at the shared scanner and block releases with critical or high findings.</p></CardHeader><CardContent className="flex flex-col gap-3 sm:flex-row"><Input value={repositoryUrl} onChange={(e) => setRepositoryUrl(e.target.value)} placeholder="https://github.com/org/repository or gitlab.com/..." className="border-white/10 bg-black/10"/><Button variant="outline" className="border-cyan-300/20 bg-cyan-300/5 text-cyan-100" onClick={() => toast.success(repositoryUrl ? "Repository saved for CI setup" : "Paste a repository URL first")}>Save repository</Button></CardContent></Card>
-      <Card className="mt-6 border-white/10 bg-white/[.035]"><CardHeader><CardTitle className="flex items-center gap-2 text-base"><ShieldCheck size={16} className="text-cyan-300"/> Team access</CardTitle><p className="text-sm text-slate-500">Keep review ownership clear with explicit workspace roles.</p></CardHeader><CardContent className="grid gap-3 md:grid-cols-4"><Input value={workspaceName} onChange={(e) => setWorkspaceName(e.target.value)} placeholder="Workspace name" className="border-white/10 bg-black/10"/><Button variant="outline" className="border-white/10 bg-transparent" disabled={!isAuthenticated} onClick={() => createWorkspace.mutate({ name: workspaceName })}>Create workspace</Button><Input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="Member email" className="border-white/10 bg-black/10"/><Button variant="outline" className="border-white/10 bg-transparent" disabled={!workspaces.data?.[0] || !inviteEmail} onClick={() => { const team = workspaces.data?.[0]; if (team) inviteMember.mutate({ teamId: team.id, email: inviteEmail, role: "member" }); }}>Invite member</Button><div className="flex items-center gap-2 text-xs text-slate-400 md:col-span-4">{workspaces.data?.[0] ? <><span className="rounded-full bg-cyan-300/10 px-2 py-1 text-cyan-200">{workspaces.data[0].role}</span>{workspaces.data[0].name} · invitations require the member to have signed in once</> : "Sign in to manage members"}</div></CardContent></Card>
-      <Card className="mt-6 border-white/10 bg-white/[.035]"><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Clock3 size={16} className="text-cyan-300"/> Recurring scans</CardTitle><p className="text-sm text-slate-500">Run the same repository check automatically on a UTC schedule.</p></CardHeader><CardContent className="grid gap-3 md:grid-cols-[1fr_180px_auto]"><Input value={repositoryUrl} onChange={(e) => setRepositoryUrl(e.target.value)} placeholder="Public GitHub/GitLab URL" className="border-white/10 bg-black/10"/><Input value={cronExpression} onChange={(e) => setCronExpression(e.target.value)} aria-label="UTC cron expression" className="border-white/10 bg-black/10 font-mono text-xs"/><Button className="bg-cyan-300 text-[#06111d] hover:bg-cyan-200" disabled={!isAuthenticated || createSchedule.isPending} onClick={() => createSchedule.mutate({ projectName, repositoryUrl, cronExpression })}>Schedule scan</Button><p className="text-xs text-slate-500 md:col-span-3">Example: <code className="text-cyan-200">0 0 9 * * *</code> runs daily at 09:00 UTC. {schedules.data?.length ?? 0} schedule(s) configured.</p>{schedules.data?.map((schedule) => <div key={schedule.id} className="flex items-center justify-between rounded-lg border border-white/5 bg-black/10 p-3 text-xs md:col-span-3"><div><p className="font-medium text-slate-200">{schedule.projectName}</p><p className="font-mono text-slate-500">{schedule.cronExpression} · {schedule.repositoryUrl}</p></div><Button size="sm" variant="outline" className="border-white/10 bg-transparent" onClick={() => setScheduleEnabled.mutate({ id: schedule.id, enabled: !Boolean(schedule.enabled) })}>{schedule.enabled ? "Pause" : "Resume"}</Button></div>)}</CardContent></Card>
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]"><Card className="border-white/10 bg-white/[.035]"><CardHeader><CardTitle className="flex items-center gap-2 text-base"><TerminalSquare size={16} className="text-cyan-300"/> One report. Every workflow.</CardTitle></CardHeader><CardContent><Tabs defaultValue="cli"><TabsList className="bg-black/20"><TabsTrigger value="cli">CLI</TabsTrigger><TabsTrigger value="java">Desktop client</TabsTrigger><TabsTrigger value="api">API contract</TabsTrigger></TabsList><TabsContent value="cli" className="mt-4 text-sm leading-7 text-slate-400">Run <code className="rounded bg-black/30 px-2 py-1 text-cyan-200">python clients/cli/codeshield.py ./my-project --json report.json</code> to submit a project and print a readable terminal summary.</TabsContent><TabsContent value="java" className="mt-4 text-sm leading-7 text-slate-400">The desktop client uses the same JSON API and renders severity cards in a lightweight window.</TabsContent><TabsContent value="api" className="mt-4 text-sm leading-7 text-slate-400">The stable <code className="text-cyan-200">schemaVersion: 1.0</code> report keeps review, CI and desktop workflows consistent.</TabsContent></Tabs></CardContent></Card><Card className="border-white/10 bg-white/[.035]"><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Clock3 size={16} className="text-cyan-300"/> Scan history</CardTitle></CardHeader><CardContent>{isAuthenticated ? history.data?.length ? <div className="space-y-3">{history.data.slice(0, 5).map((scan) => <button key={scan.id} onClick={() => setSelectedScan(scan.id)} className={`flex w-full items-center justify-between border-b border-white/5 pb-3 text-left text-sm ${selectedScan === scan.id ? "text-cyan-200" : ""}`}><div><p className="font-medium">{scan.projectName}</p><p className="text-xs text-slate-500">{scan.filesScanned} files · {new Date(scan.createdAt).toLocaleString()}</p></div><span className="font-mono text-xs text-red-200">{scan.criticalCount + scan.highCount} high risk</span></button>)}{storedDetail.data && <div className="mt-4 rounded-xl border border-cyan-300/15 bg-cyan-300/5 p-3"><p className="mb-2 text-xs font-semibold uppercase tracking-wider text-cyan-200">Stored findings · scan #{storedDetail.data.scan.id}</p><div className="space-y-2">{storedDetail.data.findings.slice(0, 5).map((finding) => <p key={finding.id} className="text-xs text-slate-300"><span className="mr-2 text-red-200">{finding.severity}</span>{finding.file}:{finding.line} · {finding.title}</p>)}</div></div>}</div> : <p className="text-sm text-slate-500">Your completed scans will appear here.</p> : <p className="text-sm leading-6 text-slate-500">Run a scan to see real findings. Sign in only if you want to save history and review it later.</p>}</CardContent></Card></div>
-    </main><footer className="mx-auto max-w-[1440px] px-6 pb-8 text-xs text-slate-600">CodeShield Mix · deterministic rules remain the source of truth; AI adds context, never verdicts.</footer>
-  </div>;
+  const filtered = useMemo(
+    () =>
+      showReport?.findings.filter(
+        item => filter === "all" || item.severity === filter
+      ) ?? [],
+    [showReport, filter]
+  );
+  const start = () => {
+    const name = deriveProjectName(projectName, archive?.name);
+    if (name === "Uploaded archive" && !archive) {
+      toast.error("Enter a project name before scanning pasted code");
+      return;
+    }
+    setReport(null);
+    runScan.mutate(
+      archive
+        ? {
+            projectName: name,
+            files: [],
+            archiveBase64: archive.base64,
+            archiveName: archive.name,
+          }
+        : { projectName: name, files: [{ path, content: code }] }
+    );
+  };
+  const chooseArchive = async (file?: File) => {
+    if (!file) return;
+    if (file.size > 6_000_000) {
+      toast.error("Archive exceeds the 6 MB temporary limit");
+      return;
+    }
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      let binary = "";
+      const chunk = 0x8000;
+      for (let offset = 0; offset < bytes.length; offset += chunk)
+        binary += String.fromCharCode(
+          ...Array.from(
+            bytes.subarray(offset, Math.min(offset + chunk, bytes.length))
+          )
+        );
+      const base64 = btoa(binary);
+      const derivedName = deriveProjectName(projectName, file.name);
+      setProjectName(current => current.trim() || derivedName);
+      setArchive({ name: file.name, base64 });
+      setReport(null);
+      toast.success(`${file.name} uploaded; scan started`);
+      runScan.mutate({
+        projectName: derivedName,
+        files: [],
+        archiveBase64: base64,
+        archiveName: file.name,
+      });
+    } catch {
+      toast.error("Could not read this ZIP archive");
+    }
+  };
+  const exportReport = (type: "json" | "html") => {
+    if (!showReport) return;
+    if (type === "json")
+      download(
+        `${showReport.projectName.replace(/\s+/g, "-")}.json`,
+        serializeJsonReport(showReport),
+        "application/json"
+      );
+    else
+      download(
+        `${showReport.projectName.replace(/\s+/g, "-")}.html`,
+        serializeHtmlReport(showReport),
+        "text/html"
+      );
+  };
+  return (
+    <div className="min-h-screen bg-[#07111f] text-slate-100">
+      <header className="border-b border-white/10 bg-[#07111f]/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-cyan-300 text-[#07111f]">
+              <ShieldCheck size={20} />
+            </div>
+            <div>
+              <p className="font-semibold tracking-tight">
+                CodeShield <span className="text-cyan-300">Mix</span>
+              </p>
+              <p className="text-[10px] uppercase tracking-[0.28em] text-slate-500">
+                Source assurance platform
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-slate-400">
+            <span className="hidden items-center gap-2 sm:flex">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" /> Engine
+              online
+            </span>
+            {user ? (
+              <>
+                <span className="rounded-full border border-white/10 px-3 py-1.5">
+                  {user.name || user.email}
+                </span>
+                <Button variant="ghost" size="sm" onClick={() => logout()}>
+                  Sign out
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" onClick={() => startLogin()}>
+                Sign in to save scans
+              </Button>
+            )}
+          </div>
+        </div>
+      </header>
+      <main className="mx-auto max-w-[1440px] px-6 py-8">
+        <div className="mb-8 grid gap-6 lg:grid-cols-[1.1fr_.9fr] lg:items-end">
+          <div>
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/5 px-3 py-1 text-xs text-cyan-200">
+              <Sparkles size={13} /> Deterministic rules, augmented intelligence
+            </div>
+            <h1 className="max-w-3xl text-4xl font-semibold leading-[1.08] tracking-[-0.04em] sm:text-6xl">
+              See the risk hiding in every line of code.
+            </h1>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-400">
+              Find exposed credentials, dangerous APIs, quality regressions and
+              repeated code before they reach production.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-2xl border border-white/10 bg-white/[.035] p-4">
+              <p className="text-2xl font-semibold">Line-level</p>
+              <p className="mt-1 text-xs text-slate-500">Evidence</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[.035] p-4">
+              <p className="text-2xl font-semibold">1.0</p>
+              <p className="mt-1 text-xs text-slate-500">Report schema</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[.035] p-4">
+              <p className="text-2xl font-semibold">API</p>
+              <p className="mt-1 text-xs text-slate-500">Shared contract</p>
+            </div>
+          </div>
+        </div>
+        <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
+          <Card className="border-white/10 bg-white/[.035] shadow-2xl shadow-cyan-950/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Play size={16} className="text-cyan-300" /> Launch a scan
+              </CardTitle>
+              <p className="text-sm text-slate-500">
+                Paste a source file or upload a project archive to get
+                actionable findings.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Input
+                value={projectName}
+                onChange={e => setProjectName(e.target.value)}
+                placeholder="Project name"
+                className="border-white/10 bg-black/10"
+              />
+              <div className="grid grid-cols-[1fr_100px] gap-2">
+                <Input
+                  value={path}
+                  onChange={e => setPath(e.target.value)}
+                  placeholder="src/main.py"
+                  className="border-white/10 bg-black/10"
+                />
+                <div className="flex items-center justify-center rounded-md border border-white/10 text-xs text-cyan-200">
+                  {path.split(".").pop()?.toUpperCase()}
+                </div>
+              </div>
+              <Textarea
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                className="min-h-[280px] resize-none border-white/10 bg-[#050b14] font-mono text-xs leading-6 text-slate-300"
+              />
+              <label className="flex cursor-pointer items-center justify-between rounded-md border border-dashed border-cyan-300/20 bg-cyan-300/5 px-3 py-2 text-xs text-cyan-100">
+                <span>
+                  {archive
+                    ? `Archive ready · ${archive.name}`
+                    : "Or upload a ZIP source archive"}
+                </span>
+                <input
+                  type="file"
+                  accept=".zip,application/zip"
+                  className="hidden"
+                  onChange={e => chooseArchive(e.target.files?.[0])}
+                />
+                <span className="rounded bg-cyan-300/10 px-2 py-1">Browse</span>
+              </label>
+              <Button
+                className="w-full bg-cyan-300 text-[#06111d] hover:bg-cyan-200"
+                onClick={start}
+                disabled={runScan.isPending}
+              >
+                {runScan.isPending ? (
+                  <>
+                    <LoaderCircle size={15} className="animate-spin" />{" "}
+                    Scanning…
+                  </>
+                ) : (
+                  <>
+                    <Play size={14} /> Run scan
+                  </>
+                )}
+              </Button>
+              {runScan.isPending && (
+                <div
+                  className="scan-progress-panel"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-cyan-300/10 text-cyan-200">
+                      <ScanLine size={15} className="scan-pulse" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold text-cyan-100">
+                        {scanStages[scanStage]}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        Live activity · the engine is still working
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    className="mt-3 h-2 overflow-hidden rounded-full bg-slate-900/90"
+                    role="progressbar"
+                    aria-label="Scan in progress"
+                    aria-valuetext="Code analysis is in progress"
+                  >
+                    <div className="scan-progress-indeterminate h-full rounded-full" />
+                  </div>
+                  <div className="mt-3 grid grid-cols-4 gap-1">
+                    {scanStages.map((stage, index) => (
+                      <div
+                        key={stage}
+                        className={`flex items-center gap-1 text-[10px] ${index <= scanStage ? "text-cyan-200" : "text-slate-600"}`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${index <= scanStage ? "bg-cyan-300" : "bg-slate-700"}`}
+                        />
+                        <span className="hidden sm:inline">
+                          {stage
+                            .replace("Running deterministic rules", "Rules")
+                            .replace("Finalizing report", "Report")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500">
+                <LockKeyhole size={12} /> Anyone can scan; sign in only to save
+                history, teams, or schedules
+              </div>
+            </CardContent>
+          </Card>
+          <section className="min-w-0">
+            {showReport &&
+              (() => {
+                const outcome = reportOutcome(showReport);
+                const tone =
+                  outcome.tone === "urgent"
+                    ? "border-red-300/25 bg-red-300/10 text-red-50"
+                    : outcome.tone === "safe"
+                      ? "border-emerald-300/25 bg-emerald-300/10 text-emerald-50"
+                      : "border-amber-300/25 bg-amber-300/10 text-amber-50";
+                const OutcomeIcon =
+                  outcome.tone === "safe" ? CheckCircle2 : AlertTriangle;
+                return (
+                  <div className={`mb-5 rounded-2xl border p-5 ${tone}`}>
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="flex gap-3">
+                        <div className="mt-0.5">
+                          <OutcomeIcon size={22} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[.18em] opacity-70">
+                            Scan result
+                          </p>
+                          <h3 className="mt-1 text-xl font-semibold">
+                            {outcome.title}
+                          </h3>
+                          <p className="mt-2 max-w-2xl text-sm leading-6 opacity-80">
+                            {outcome.body}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="rounded-full border border-current/20 px-3 py-1.5 text-xs font-semibold">
+                        {outcome.action}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[.2em] text-slate-500">
+                  What to do next
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold">
+                  {showReport?.projectName || "Awaiting your first scan"}
+                </h2>
+              </div>
+              {showReport && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-white/10 bg-transparent"
+                    onClick={() => exportReport("json")}
+                  >
+                    <Download size={14} /> JSON
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-white/10 bg-transparent"
+                    onClick={() => exportReport("html")}
+                  >
+                    <Download size={14} /> HTML
+                  </Button>
+                </div>
+              )}
+            </div>
+            {showReport ? (
+              <>
+                <div className="mb-5 rounded-2xl border border-emerald-300/15 bg-emerald-300/5 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-emerald-100">
+                        <Activity size={15} /> Code quality score
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-slate-400">
+                        Maintainability, duplication and hygiene only. Security
+                        risk is shown separately below.
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-3xl font-semibold text-emerald-200">
+                        {showReport.qualityScore.score.toFixed(1)}
+                        <span className="text-base text-emerald-200/60">
+                          /10
+                        </span>
+                      </p>
+                      <p className="text-[11px] uppercase tracking-wider text-emerald-200/70">
+                        {showReport.qualityScore.label}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-2 text-[11px] text-slate-400 sm:grid-cols-3">
+                    <span>
+                      Maintainability −
+                      {showReport.qualityScore.breakdown.maintainability.toFixed(
+                        2
+                      )}
+                    </span>
+                    <span>
+                      Duplication −
+                      {showReport.qualityScore.breakdown.duplication.toFixed(2)}
+                    </span>
+                    <span>
+                      Hygiene −
+                      {showReport.qualityScore.breakdown.hygiene.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+                <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+                  {Object.entries(showReport.summary).map(([key, value]) => (
+                    <button
+                      key={key}
+                      onClick={() => setFilter(key as typeof filter)}
+                      className={`rounded-xl border p-3 text-left transition ${filter === key ? "border-cyan-300/50 bg-cyan-300/10" : "border-white/10 bg-white/[.035] hover:border-white/20"}`}
+                    >
+                      <p
+                        className={`text-2xl font-semibold ${severityMeta[key as Finding["severity"]].color}`}
+                      >
+                        {value}
+                      </p>
+                      <p className="mt-1 text-[11px] uppercase tracking-wider text-slate-500">
+                        {key}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+                {showReport.aiSignals.length > 0 && (
+                  <div className="mb-5 rounded-xl border border-violet-300/15 bg-violet-300/5 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-violet-100">
+                          AI-generated code likelihood
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-slate-400">
+                          Pattern-based likelihood only—not proof of authorship
+                          or a security verdict.
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-violet-300/10 px-2 py-1 text-xs text-violet-200">
+                        {showReport.aiSignals.length} file(s)
+                      </span>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {showReport.aiSignals.map(signal => (
+                        <div
+                          key={signal.file}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/5 bg-black/10 px-3 py-2 text-xs"
+                        >
+                          <span className="font-mono text-slate-300">
+                            {signal.file}
+                          </span>
+                          <span className="text-violet-200">
+                            {signal.score}% likelihood · {signal.confidence}{" "}
+                            confidence
+                          </span>
+                          <details className="w-full text-xs text-slate-400">
+                            <summary className="cursor-pointer text-slate-300">
+                              {signal.file}:{signal.lineStart}-{signal.lineEnd}{" "}
+                              · why this signal?
+                            </summary>
+                            <div className="mt-2 space-y-2">
+                              <pre className="overflow-x-auto rounded bg-black/20 p-2 font-mono text-[11px] leading-5 text-slate-400">
+                                {signal.evidence}
+                              </pre>
+                              <p>
+                                <strong className="text-slate-300">
+                                  Evidence:
+                                </strong>{" "}
+                                {signal.reasons.join(" · ")}
+                              </p>
+                              <p>
+                                <strong className="text-slate-300">
+                                  Score breakdown:
+                                </strong>{" "}
+                                comments {signal.scoreBreakdown.commentDensity},
+                                phrasing {signal.scoreBreakdown.phrasing},
+                                markers{" "}
+                                {signal.scoreBreakdown.unresolvedMarkers},
+                                formatting {signal.scoreBreakdown.formatting},
+                                breadth {signal.scoreBreakdown.breadth}
+                              </p>
+                              <p>
+                                <strong className="text-slate-300">
+                                  Verify:
+                                </strong>{" "}
+                                {signal.verification}
+                              </p>
+                              <p>
+                                <strong className="text-slate-300">
+                                  Next step:
+                                </strong>{" "}
+                                {signal.remediation}
+                              </p>
+                            </div>
+                          </details>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-slate-400">
+                    <AlertTriangle size={15} className="text-amber-300" />{" "}
+                    {filtered.length} items to review{" "}
+                    <button
+                      className="text-cyan-300 hover:underline"
+                      onClick={() => setFilter("all")}
+                    >
+                      Reset
+                    </button>
+                  </div>
+                  <span className="text-xs text-slate-500">
+                    {showReport.filesScanned} supported files ·{" "}
+                    {showReport.durationMs}ms
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {filtered.length ? (
+                    filtered.map(item => {
+                      const key = item.title + item.message;
+                      return (
+                        <Card
+                          key={item.id}
+                          className="border-white/10 bg-white/[.035]"
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="mt-0.5 rounded-lg bg-white/5 p-2 text-slate-400">
+                                <FileCode2 size={16} />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {severityBadge(item.severity)}
+                                  <span className="text-sm font-semibold">
+                                    {plainFindingTitle(item)}
+                                  </span>
+                                </div>
+                                <p className="mt-2 text-sm leading-6 text-slate-300">
+                                  {findingImpact(item)}
+                                </p>
+                                <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
+                                  <span className="flex items-center gap-1 font-mono text-cyan-200/70">
+                                    <ArrowUpRight size={11} />
+                                    {item.file}:{item.line}
+                                  </span>
+                                  <span>Rule: {item.ruleId}</span>
+                                </div>
+                                <div className="mt-4 rounded-lg border border-white/5 bg-black/20 p-3 text-xs leading-5 text-slate-400">
+                                  <span className="font-semibold text-slate-300">
+                                    How to fix:
+                                  </span>{" "}
+                                  {item.remediation}
+                                </div>
+                                <CodeEvidence
+                                  file={item.file}
+                                  line={item.line}
+                                  language={item.language}
+                                  snippet={item.snippet}
+                                  context={item.context}
+                                  related={item.related}
+                                />
+                                <details className="mt-3 text-xs text-slate-500">
+                                  <summary className="cursor-pointer hover:text-slate-400">
+                                    Technical evidence
+                                  </summary>
+                                  <div className="mt-2 space-y-3 border-t border-white/5 pt-3">
+                                    <p>{item.message}</p>
+                                    {item.snippet && (
+                                      <pre className="overflow-x-auto rounded bg-black/30 p-2 font-mono text-[10px] leading-5 text-slate-400">
+                                        {item.snippet}
+                                      </pre>
+                                    )}
+                                  </div>
+                                </details>
+                                {ai[key] && (
+                                  <div className="mt-3 rounded-lg border border-cyan-300/15 bg-cyan-300/5 p-3 text-xs leading-5 text-cyan-50">
+                                    <p>
+                                      <strong>AI risk context:</strong>{" "}
+                                      {ai[key].riskExplanation}
+                                    </p>
+                                    <p className="mt-1">
+                                      <strong>Suggested next step:</strong>{" "}
+                                      {ai[key].remediationSuggestion}
+                                    </p>
+                                  </div>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="mt-2 h-7 px-0 text-xs text-cyan-300 hover:bg-transparent hover:text-cyan-200"
+                                  onClick={() =>
+                                    explain.mutate({
+                                      title: item.title,
+                                      message: item.message,
+                                      remediation: item.remediation,
+                                      language: item.language,
+                                      snippet: item.snippet,
+                                    })
+                                  }
+                                >
+                                  <Sparkles size={13} />{" "}
+                                  {explain.isPending
+                                    ? "Explaining…"
+                                    : "Add AI context"}
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 p-12 text-center text-slate-500">
+                      <CheckCircle2 className="mx-auto mb-3 text-emerald-300" />
+                      No findings match this filter.
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="grid min-h-[520px] place-items-center rounded-2xl border border-dashed border-white/10 bg-white/[.02] text-center">
+                <div>
+                  <Code2 className="mx-auto mb-4 text-cyan-300" size={32} />
+                  <p className="font-medium">
+                    Paste code and launch the first scan
+                  </p>
+                  <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+                    The dashboard will rank every finding, link it to an exact
+                    line, and create a portable JSON/HTML report.
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+        <Card className="mt-8 border-white/10 bg-white/[.035]">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ArrowUpRight size={16} className="text-cyan-300" /> Repository
+              checks
+            </CardTitle>
+            <p className="text-sm text-slate-500">
+              Save a public GitHub or GitLab URL, then check it on demand.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                value={repositoryUrl}
+                onChange={e => setRepositoryUrl(e.target.value)}
+                placeholder="https://github.com/org/repository"
+                className="border-white/10 bg-black/10"
+              />
+              <Button
+                className="bg-cyan-300 text-[#06111d] hover:bg-cyan-200"
+                disabled={!isAuthenticated || saveRepositoryMutation.isPending}
+                onClick={() =>
+                  saveRepositoryMutation.mutate({
+                    name:
+                      projectName.trim() ||
+                      repositoryUrl.split("/").filter(Boolean).pop() ||
+                      "Repository",
+                    repositoryUrl,
+                  })
+                }
+              >
+                {saveRepositoryMutation.isPending ? "Saving…" : "Save"}
+              </Button>
+            </div>
+            {!isAuthenticated && (
+              <p className="text-xs text-slate-500">
+                Sign in to save a repository and run checks from the dashboard.
+              </p>
+            )}
+            {repositories.data?.map(repository => (
+              <div
+                key={repository.id}
+                className="flex flex-col gap-2 rounded-xl border border-white/10 bg-black/10 p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-slate-200">
+                    {repository.name}
+                  </p>
+                  <p className="truncate text-xs text-slate-500">
+                    {repository.repositoryUrl}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-cyan-300/20 bg-transparent text-cyan-100"
+                  disabled={checkRepositoryMutation.isPending}
+                  onClick={() =>
+                    checkRepositoryMutation.mutate({ id: repository.id })
+                  }
+                >
+                  {checkRepositoryMutation.isPending
+                    ? "Checking…"
+                    : "Check now"}
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+        <Card className="mt-6 border-white/10 bg-white/[.035]">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ShieldCheck size={16} className="text-cyan-300" /> Team
+            </CardTitle>
+            <p className="text-sm text-slate-500">
+              Create a review workspace and invite teammates.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {!isAuthenticated ? (
+              <Button
+                variant="outline"
+                className="border-cyan-300/20 bg-transparent text-cyan-100"
+                onClick={() => startLogin()}
+              >
+                Sign in to manage team
+              </Button>
+            ) : (
+              <>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    value={workspaceName}
+                    onChange={e => setWorkspaceName(e.target.value)}
+                    placeholder="Workspace name"
+                    className="border-white/10 bg-black/10"
+                  />
+                  <Button
+                    variant="outline"
+                    className="border-white/10 bg-transparent"
+                    disabled={createWorkspace.isPending}
+                    onClick={() =>
+                      createWorkspace.mutate({ name: workspaceName })
+                    }
+                  >
+                    Create workspace
+                  </Button>
+                </div>
+                {workspaces.data?.[0] && (
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      value={inviteEmail}
+                      onChange={e => setInviteEmail(e.target.value)}
+                      placeholder="Member email"
+                      className="border-white/10 bg-black/10"
+                    />
+                    <Button
+                      variant="outline"
+                      className="border-white/10 bg-transparent"
+                      disabled={!inviteEmail || inviteMember.isPending}
+                      onClick={() =>
+                        inviteMember.mutate({
+                          teamId: workspaces.data[0].id,
+                          email: inviteEmail,
+                          role: "member",
+                        })
+                      }
+                    >
+                      Invite
+                    </Button>
+                  </div>
+                )}
+                <p className="text-xs text-slate-500">
+                  {workspaces.data?.[0]
+                    ? `${workspaces.data[0].name} · ${workspaces.data[0].role}`
+                    : "Create a workspace to start team review."}
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="mt-6 border-white/10 bg-white/[.035]">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Clock3 size={16} className="text-cyan-300" /> Scheduled checks
+            </CardTitle>
+            <p className="text-sm text-slate-500">
+              Run a saved repository check on a UTC schedule.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {!isAuthenticated ? (
+              <Button
+                variant="outline"
+                className="border-cyan-300/20 bg-transparent text-cyan-100"
+                onClick={() => startLogin()}
+              >
+                Sign in to schedule checks
+              </Button>
+            ) : (
+              <>
+                <div className="grid gap-2 sm:grid-cols-[1fr_180px_auto]">
+                  <Input
+                    value={repositoryUrl}
+                    onChange={e => setRepositoryUrl(e.target.value)}
+                    placeholder="Public GitHub/GitLab URL"
+                    className="border-white/10 bg-black/10"
+                  />
+                  <Input
+                    value={cronExpression}
+                    onChange={e => setCronExpression(e.target.value)}
+                    aria-label="UTC cron expression"
+                    className="border-white/10 bg-black/10 font-mono text-xs"
+                  />
+                  <Button
+                    className="bg-cyan-300 text-[#06111d] hover:bg-cyan-200"
+                    disabled={createSchedule.isPending}
+                    onClick={() =>
+                      createSchedule.mutate({
+                        projectName: projectName.trim() || "Repository check",
+                        repositoryUrl,
+                        cronExpression,
+                      })
+                    }
+                  >
+                    Schedule
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-500">
+                  <code className="text-cyan-200">0 0 9 * * *</code> = daily at
+                  09:00 UTC · {schedules.data?.length ?? 0} configured
+                </p>
+                {schedules.data?.map(schedule => (
+                  <div
+                    key={schedule.id}
+                    className="flex items-center justify-between rounded-lg border border-white/5 bg-black/10 p-3 text-xs"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-slate-200">
+                        {schedule.projectName}
+                      </p>
+                      <p className="truncate font-mono text-slate-500">
+                        {schedule.cronExpression}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-white/10 bg-transparent"
+                      onClick={() =>
+                        setScheduleEnabled.mutate({
+                          id: schedule.id,
+                          enabled: !Boolean(schedule.enabled),
+                        })
+                      }
+                    >
+                      {schedule.enabled ? "Pause" : "Resume"}
+                    </Button>
+                  </div>
+                ))}
+              </>
+            )}
+          </CardContent>
+        </Card>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
+          <Card className="border-white/10 bg-white/[.035]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <TerminalSquare size={16} className="text-cyan-300" /> One
+                report. Every workflow.
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="cli">
+                <TabsList className="bg-black/20">
+                  <TabsTrigger value="cli">CLI</TabsTrigger>
+                  <TabsTrigger value="java">Desktop client</TabsTrigger>
+                  <TabsTrigger value="api">API contract</TabsTrigger>
+                </TabsList>
+                <TabsContent
+                  value="cli"
+                  className="mt-4 text-sm leading-7 text-slate-400"
+                >
+                  Run{" "}
+                  <code className="rounded bg-black/30 px-2 py-1 text-cyan-200">
+                    python clients/cli/codeshield.py ./my-project --json
+                    report.json
+                  </code>{" "}
+                  to submit a project and print a readable terminal summary.
+                </TabsContent>
+                <TabsContent
+                  value="java"
+                  className="mt-4 text-sm leading-7 text-slate-400"
+                >
+                  The desktop client uses the same JSON API and renders severity
+                  cards in a lightweight window.
+                </TabsContent>
+                <TabsContent
+                  value="api"
+                  className="mt-4 text-sm leading-7 text-slate-400"
+                >
+                  The stable{" "}
+                  <code className="text-cyan-200">schemaVersion: 1.0</code>{" "}
+                  report keeps review, CI and desktop workflows consistent.
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+          <Card className="border-white/10 bg-white/[.035]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Clock3 size={16} className="text-cyan-300" /> Scan history
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isAuthenticated ? (
+                history.data?.length ? (
+                  <div className="space-y-3">
+                    {history.data.slice(0, 5).map(scan => (
+                      <button
+                        key={scan.id}
+                        onClick={() => setSelectedScan(scan.id)}
+                        className={`flex w-full items-center justify-between border-b border-white/5 pb-3 text-left text-sm ${selectedScan === scan.id ? "text-cyan-200" : ""}`}
+                      >
+                        <div>
+                          <p className="font-medium">{scan.projectName}</p>
+                          <p className="text-xs text-slate-500">
+                            {scan.filesScanned} files ·{" "}
+                            {new Date(scan.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        <span className="font-mono text-xs text-red-200">
+                          {scan.criticalCount + scan.highCount} high risk
+                        </span>
+                      </button>
+                    ))}
+                    {storedDetail.data && (
+                      <div className="mt-4 rounded-xl border border-cyan-300/15 bg-cyan-300/5 p-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-cyan-200">
+                          Stored findings · scan #{storedDetail.data.scan.id}
+                        </p>
+                        <div className="space-y-2">
+                          {storedDetail.data.findings
+                            .slice(0, 5)
+                            .map(finding => (
+                              <p
+                                key={finding.id}
+                                className="text-xs text-slate-300"
+                              >
+                                <span className="mr-2 text-red-200">
+                                  {finding.severity}
+                                </span>
+                                {finding.file}:{finding.line} · {finding.title}
+                              </p>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    Your completed scans will appear here.
+                  </p>
+                )
+              ) : (
+                <p className="text-sm leading-6 text-slate-500">
+                  Run a scan to see real findings. Sign in only if you want to
+                  save history and review it later.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+      <footer className="mx-auto max-w-[1440px] px-6 pb-8 text-xs text-slate-600">
+        CodeShield Mix · deterministic rules remain the source of truth; AI adds
+        context, never verdicts.
+      </footer>
+    </div>
+  );
 }

@@ -1,4 +1,13 @@
-import { int, json, longtext, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  int,
+  json,
+  longtext,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+} from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
@@ -16,7 +25,9 @@ export const scans = mysqlTable("scans", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   projectName: varchar("projectName", { length: 180 }).notNull(),
-  status: mysqlEnum("status", ["completed", "failed"]).default("completed").notNull(),
+  status: mysqlEnum("status", ["completed", "failed"])
+    .default("completed")
+    .notNull(),
   filesScanned: int("filesScanned").notNull(),
   criticalCount: int("criticalCount").notNull().default(0),
   highCount: int("highCount").notNull().default(0),
@@ -31,8 +42,18 @@ export const findings = mysqlTable("findings", {
   id: int("id").autoincrement().primaryKey(),
   scanId: int("scanId").notNull(),
   ruleId: varchar("ruleId", { length: 32 }).notNull(),
-  severity: mysqlEnum("severity", ["critical", "high", "medium", "low", "info"]).notNull(),
-  category: mysqlEnum("category", ["security", "quality", "duplication"]).notNull(),
+  severity: mysqlEnum("severity", [
+    "critical",
+    "high",
+    "medium",
+    "low",
+    "info",
+  ]).notNull(),
+  category: mysqlEnum("category", [
+    "security",
+    "quality",
+    "duplication",
+  ]).notNull(),
   title: varchar("title", { length: 240 }).notNull(),
   message: text("message").notNull(),
   remediation: text("remediation").notNull(),
@@ -53,9 +74,21 @@ export const teamMembers = mysqlTable("teamMembers", {
   id: int("id").autoincrement().primaryKey(),
   teamId: int("teamId").notNull(),
   userId: int("userId").notNull(),
-  role: mysqlEnum("teamRole", ["owner", "admin", "member"]).default("member").notNull(),
+  role: mysqlEnum("teamRole", ["owner", "admin", "member"])
+    .default("member")
+    .notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
+export const repositories = mysqlTable("repositories", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 180 }).notNull(),
+  repositoryUrl: varchar("repositoryUrl", { length: 500 }).notNull(),
+  lastScanId: int("lastScanId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const scheduledScans = mysqlTable("scheduledScans", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),

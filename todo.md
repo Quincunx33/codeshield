@@ -256,3 +256,12 @@
 
 - [x] Replace workflow dependence on the live dashboard API with an offline local scanner invocation so GitHub runners do not require external API access
 - [x] Re-run and verify the workflow after the local-engine correction
+
+# Working repository flows and simple UI
+
+- [x] Add authenticated repository persistence and clear saved-status feedback
+- [x] Add a real manual repository check flow using the existing public scanner contract
+- [x] Simplify Team access, Recurring scans, workflow docs, and Scan history into compact actionable cards
+- [x] Add clear anonymous versus authenticated states without misleading disabled controls
+- [x] Test the new flows, responsive layout, and error handling
+- [x] Save and publish the verified dashboard update
