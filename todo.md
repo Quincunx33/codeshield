@@ -183,15 +183,15 @@
 
 # GitHub publication
 
-- [ ] Inspect GitHub identity and confirm the requested repository name is available
-- [ ] Create a polished README with live application link, usage, architecture, testing, and security notes
-- [ ] Add a branded visual asset to the README without storing credentials or secrets
-- [ ] Create the private GitHub repository, set description/topics, and push the tested code
-- [ ] Verify repository files, README rendering/link, metadata, and published remote state
+- [x] Inspect GitHub identity and confirm the requested repository name is available
+- [x] Create a polished README with live application link, usage, architecture, testing, and security notes
+- [x] Add a branded visual asset to the README without storing credentials or secrets
+- [x] Create the private GitHub repository, set description/topics, and push the tested code
+- [x] Verify repository files, README rendering/link, metadata, and published remote state
 
 # GitHub rename and workflow-excluded push
 
-- [ ] Rename repository references from CodeShield Mix to CodeShield where appropriate
-- [ ] Update README links, title, description, and topics for the renamed repository
-- [ ] Rename the GitHub repository to `codeshield` and push all non-workflow files
-- [ ] Verify the renamed remote, metadata, README, and workflow exclusion
+- [x] Rename repository references from CodeShield Mix to CodeShield where appropriate
+- [x] Update README links, title, description, and topics for the renamed repository
+- [x] Rename the GitHub repository to `codeshield` and push all non-workflow files
+- [x] Verify the renamed remote, metadata, README, and workflow exclusion
